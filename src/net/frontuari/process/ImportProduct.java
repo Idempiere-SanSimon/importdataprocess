@@ -384,7 +384,26 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			log.warning("Not Unique VendorProductNo=" + no);
-
+		
+		//	Added by Jorge Colmenarez 2020-03-19 17:09 
+		//	Set Tax Category
+		sql = new StringBuilder ("UPDATE I_Product i ")
+			.append("SET C_TaxCategory_ID = ")
+			.append("(SELECT MAX(C_TaxCategory_ID) FROM C_TaxCategory tc WHERE tc.Name = i.TaxCategoryName AND tc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
+			.append("WHERE TaxCategoryName IS NOT NULL AND C_TaxCategory_ID IS NULL")
+			.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set Tax Category=" + no);
+		//
+		sql = new StringBuilder ("UPDATE I_Product ")
+			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Tax Category, ' ")
+			.append("WHERE C_TaxCategory_ID IS NULL AND TaxCategoryName IS NOT NULL")
+			.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning("Invalid Tax Category=" + no);
+		//	End Jorge Colmenarez
+		//	Added by Carlos Vargas  
 		//	Get Default Tax Category
 		int C_TaxCategory_ID = 0;
 		PreparedStatement pstmt = null;
@@ -408,6 +427,7 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 			pstmt = null;
 		}
 		if (log.isLoggable(Level.FINE)) log.fine("C_TaxCategory_ID=" + C_TaxCategory_ID);
+		//	End Carlos Vargas
 
 		ModelValidationEngine.get().fireImportValidate(this, null, null, ImportValidator.TIMING_AFTER_VALIDATE);
 
@@ -518,6 +538,10 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 				if (newProduct)			//	Insert new Product
 				{
 					MProduct product = new MProduct(imp);
+					
+					if(imp.get_ValueAsInt("C_TaxCategory_ID") > 0)
+						C_TaxCategory_ID = imp.get_ValueAsInt("C_TaxCategory_ID"); 
+					
 					product.setC_TaxCategory_ID(C_TaxCategory_ID);
 					ModelValidationEngine.get().fireImportValidate(this, imp, product, ImportValidator.TIMING_AFTER_IMPORT);
 					if (product.save())
@@ -541,11 +565,11 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 						.append("SET (Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
-						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy)= ")
+						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID)= ")
 						.append("(SELECT Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
-						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy")
+						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID")
 						.append(" FROM I_Product WHERE I_Product_ID=").append(I_Product_ID).append(") ")
 						.append("WHERE M_Product_ID=").append(M_Product_ID);
 					PreparedStatement pstmt_updateProduct = DB.prepareStatement

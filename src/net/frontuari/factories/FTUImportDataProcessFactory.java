@@ -2,6 +2,8 @@ package net.frontuari.factories;
 
 import org.adempiere.base.IProcessFactory;
 import org.compiere.process.ProcessCall;
+
+import net.frontuari.process.ImportBPartner;
 import net.frontuari.process.ImportPayment;
 import net.frontuari.process.ImportProduct;
 
@@ -15,6 +17,9 @@ public class FTUImportDataProcessFactory implements IProcessFactory {
 		
 		if(className.equals("net.frontuari.process.ImportProduct"))
 			return new ImportProduct();
+		
+		if(className.equals("net.frontuari.process.ImportBPartner"))
+			return new ImportBPartner();
 		
 		return null;
 	}
