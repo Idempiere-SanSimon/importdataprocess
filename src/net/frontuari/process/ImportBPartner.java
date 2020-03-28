@@ -390,8 +390,10 @@ implements ImportProcess
 					{
 						bp = new MBPartner(impBP);
 						//	Support for LCO Fields
-						bp.set_ValueOfColumn("LCO_TaxPayerType_ID", impBP.get_ValueAsInt("LCO_TaxPayerType_ID"));
-						bp.set_ValueOfColumn("LCO_ISIC_ID", impBP.get_ValueAsInt("LCO_ISIC_ID"));
+						if(impBP.get_ValueAsInt("LCO_TaxPayerType_ID") > 0)
+							bp.set_ValueOfColumn("LCO_TaxPayerType_ID", impBP.get_ValueAsInt("LCO_TaxPayerType_ID"));
+						if(impBP.get_ValueAsInt("LCO_ISIC_ID") > 0)
+							bp.set_ValueOfColumn("LCO_ISIC_ID", impBP.get_ValueAsInt("LCO_ISIC_ID"));
 						// End LCO Fields
 						ModelValidationEngine.get().fireImportValidate(this, impBP, bp, ImportValidator.TIMING_AFTER_IMPORT);
 						
@@ -435,8 +437,10 @@ implements ImportProcess
 						if (impBP.getC_BP_Group_ID() != 0)
 							bp.setC_BP_Group_ID(impBP.getC_BP_Group_ID());
 						//	Support for LCO Fields
-						bp.set_ValueOfColumn("LCO_TaxPayerType_ID", impBP.get_ValueAsInt("LCO_TaxPayerType_ID"));
-						bp.set_ValueOfColumn("LCO_ISIC_ID", impBP.get_ValueAsInt("LCO_ISIC_ID"));
+						if(impBP.get_ValueAsInt("LCO_TaxPayerType_ID") > 0)
+							bp.set_ValueOfColumn("LCO_TaxPayerType_ID", impBP.get_ValueAsInt("LCO_TaxPayerType_ID"));
+						if(impBP.get_ValueAsInt("LCO_ISIC_ID") > 0)
+							bp.set_ValueOfColumn("LCO_ISIC_ID", impBP.get_ValueAsInt("LCO_ISIC_ID"));
 						// End LCO Fields
 						ModelValidationEngine.get().fireImportValidate(this, impBP, bp, ImportValidator.TIMING_AFTER_IMPORT);
 						
