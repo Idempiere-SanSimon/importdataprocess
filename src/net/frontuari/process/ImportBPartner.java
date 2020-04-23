@@ -42,6 +42,8 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
 
+import com.coposa.model.MCOP_BPartnerTypeRelation;
+
 /**
  *	Import BPartners from I_BPartner
  *
@@ -449,6 +451,10 @@ implements ImportProcess
 						//
 						if (bp.save())
 						{
+							if(impBP.get_ValueAsInt("COP_BPartnerType_ID") != 0) {
+								
+							}
+							
 							msglog = new StringBuilder("Update BPartner - ").append(bp.getC_BPartner_ID());
 							if (log.isLoggable(Level.FINEST)) log.finest(msglog.toString());
 							noUpdate++;
@@ -655,25 +661,18 @@ implements ImportProcess
 				}
 				
 				//	BPartner Type
+				// changes for Carlos Vargas add the model class MCOP_BPartnerTypeRelation
 				if(impBP.get_ValueAsInt("COP_BPartnerType_ID") > 0)
 				{
-					String sqlInsert = "INSERT INTO COP_BPartnerTypeRelation (AD_Client_ID,AD_Org_ID,C_BPartner_ID,COP_BPartnerType_ID,IsActive,COP_BPartnerTypeRelation_ID,COP_BPartnerTypeRelation_UU) VALUES "
-							+ "(?,?,?,?,?,?,?);";
+					MCOP_BPartnerTypeRelation bptr = new MCOP_BPartnerTypeRelation(getCtx(), 0, get_TrxName());
+					bptr.set_ValueOfColumn("AD_Client_ID", bp.getAD_Client_ID());
+					bptr.setAD_Org_ID(bp.getAD_Org_ID());
+					bptr.setC_BPartner_ID(bp.getC_BPartner_ID());
+					bptr.setCOP_BPartnerType_ID(impBP.get_ValueAsInt("COP_BPartnerType_ID"));
+					bptr.setIsActive(true);
+					bptr.saveEx();
 					
-					UUID uuid = UUID.randomUUID();
-					
-					DB.getSQLValue(get_TrxName(), sqlInsert, 
-							new Object[] {
-									bp.getAD_Client_ID()
-									,bp.getAD_Org_ID()
-									,bp.getC_BPartner_ID()
-									,impBP.get_ValueAsInt("COP_BPartnerType_ID")
-									,"Y"
-									,MSequence.get(getCtx(), "COP_BPartnerTypeRelation")
-									,uuid.toString()
-									});
 				}
-				
 				//
 				impBP.setI_IsImported(true);
 				impBP.setProcessed(true);
