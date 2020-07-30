@@ -65,8 +65,8 @@ public class ImportPayment extends SvrProcess
 			String name = para[i].getParameterName();
 			if (name.equals("AD_Org_ID"))
 				p_AD_Org_ID = ((BigDecimal)para[i].getParameter()).intValue();
-			else if (name.equals("C_BankAccount_ID"))
-				p_C_BankAccount_ID = ((BigDecimal)para[i].getParameter()).intValue();
+			/*else if (name.equals("C_BankAccount_ID"))
+				p_C_BankAccount_ID = ((BigDecimal)para[i].getParameter()).intValue();*/
 			else if (name.equals("DeleteOldImported"))
 				p_deleteOldImported = "Y".equals(para[i].getParameter());
 			else if (name.equals("DocAction"))
@@ -86,8 +86,10 @@ public class ImportPayment extends SvrProcess
 	{
 		if (log.isLoggable(Level.INFO)) log.info("C_BankAccount_ID" + p_C_BankAccount_ID);
 		MBankAccount ba = MBankAccount.get(getCtx(), p_C_BankAccount_ID);
-		if (p_C_BankAccount_ID == 0 || ba.get_ID() != p_C_BankAccount_ID)
-			throw new AdempiereUserError("@NotFound@ @C_BankAccount_ID@ - " + p_C_BankAccount_ID);
+		
+		/*if (p_C_BankAccount_ID == 0 || ba.get_ID() != p_C_BankAccount_ID)
+			throw new AdempiereUserError("@NotFound@ @C_BankAccount_ID@ - " + p_C_BankAccount_ID);*/
+		
 		if (p_AD_Org_ID != ba.getAD_Org_ID() && ba.getAD_Org_ID() != 0)
 			p_AD_Org_ID = ba.getAD_Org_ID();
 		if (log.isLoggable(Level.INFO)) log.info("AD_Org_ID=" + p_AD_Org_ID);
@@ -132,7 +134,7 @@ public class ImportPayment extends SvrProcess
 			log.warning ("Invalid Org=" + no);
 			
 		//	Set Bank Account
-		sql = new StringBuilder("UPDATE I_Payment i ")
+		/*sql = new StringBuilder("UPDATE I_Payment i ")
 			.append("SET C_BankAccount_ID=")
 			.append("( ")
 			.append(" SELECT C_BankAccount_ID ")
@@ -141,17 +143,17 @@ public class ImportPayment extends SvrProcess
 			.append(" AND a.AD_Client_ID=i.AD_Client_ID ")
 			.append(" AND a.C_Bank_ID=b.C_Bank_ID ")
 			.append(" AND a.AccountNo=i.BankAccountNo ")
-			.append(" AND b.RoutingNo=i.RoutingNo ")
-			.append(" OR b.SwiftCode=i.RoutingNo ")
+			//.append(" AND b.RoutingNo=i.RoutingNo ")
+			//.append(" OR b.SwiftCode=i.RoutingNo ")
 			.append(") ")
 			.append("WHERE i.C_BankAccount_ID IS NULL ")
 			.append("AND (i.I_IsImported<>'Y' ")
 			.append("OR i.I_IsImported IS NULL)").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
-			if (log.isLoggable(Level.INFO)) log.info("Bank Account (With Routing No)=" + no);
+			if (log.isLoggable(Level.INFO)) log.info("Bank Account (With Routing No)=" + no);*/
 		//
-		sql = new StringBuilder("UPDATE I_Payment i ") 
+		/*sql = new StringBuilder("UPDATE I_Payment i ") 
 		 	.append("SET C_BankAccount_ID=")
 			.append("( ")
 			.append(" SELECT C_BankAccount_ID ")
@@ -162,13 +164,12 @@ public class ImportPayment extends SvrProcess
 			.append(" AND a.AD_Client_ID=i.AD_Client_ID ")
 			.append(") ")
 			.append("WHERE i.C_BankAccount_ID IS NULL ")
-			.append("AND (i.I_isImported<>'Y' ")
-			.append("OR i.I_isImported IS NULL)").append(clientCheck);
+			.append("AND i.I_isImported<>'Y' ").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
-			if (log.isLoggable(Level.INFO)) log.info("Bank Account (Without Routing No)=" + no);
+			if (log.isLoggable(Level.INFO)) log.info("Bank Account (Without Routing No)=" + no);*/
 		//
-		sql = new StringBuilder("UPDATE I_Payment i ")
+		/*sql = new StringBuilder("UPDATE I_Payment i ")
 			.append("SET C_BankAccount_ID=(SELECT C_BankAccount_ID FROM C_BankAccount a WHERE a.C_BankAccount_ID=").append(p_C_BankAccount_ID);
 		sql.append(" and a.AD_Client_ID=i.AD_Client_ID) ")
 			.append("WHERE i.C_BankAccount_ID IS NULL ")
@@ -177,7 +178,14 @@ public class ImportPayment extends SvrProcess
 			.append("OR i.I_isImported IS NULL)").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
+			if (log.isLoggable(Level.INFO)) log.info("Bank Account=" + no);*/
+		
+		sql = new StringBuilder()
+				.append("update I_Payment i set C_BankAccount_ID = (Select ba.C_BankAccount_ID From C_BankAccount as ba WHERE ba.AccountNo = i.AccountNo)");
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
 			if (log.isLoggable(Level.INFO)) log.info("Bank Account=" + no);
+		
 		//	
 		sql = new StringBuilder("UPDATE I_Payment ")
 			.append("SET I_isImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Bank Account, ' ")

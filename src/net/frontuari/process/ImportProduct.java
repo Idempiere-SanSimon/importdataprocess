@@ -283,7 +283,7 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 		if (log.isLoggable(Level.FINE)) log.fine("Set UOM Default=" + no);
 		//
 		sql = new StringBuilder ("UPDATE I_Product i ")
-			.append("SET C_UOM_ID = (SELECT C_UOM_ID FROM C_UOM u WHERE u.X12DE355=i.X12DE355 AND u.AD_Client_ID IN (0,i.AD_Client_ID)) ")
+			.append("SET C_UOM_ID = (SELECT C_UOM_ID FROM C_UOM u WHERE u.X12DE355=i.X12DE355 AND u.AD_Client_ID IN (0,i.AD_Client_ID))")
 			.append("WHERE C_UOM_ID IS NULL")
 			.append(" AND I_IsImported<>'Y'").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
@@ -403,12 +403,14 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 		if (no != 0)
 			log.warning("Invalid Tax Category=" + no);
 		//	End Jorge Colmenarez
+		
+		
 		//	Added by Carlos Vargas  
 		//	Get Default Tax Category
 		int C_TaxCategory_ID = 0;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		try
+		/*try
 		{
 			StringBuilder dbpst = new StringBuilder("SELECT C_TaxCategory_ID FROM C_TaxCategory WHERE IsDefault='Y'").append(clientCheck);
 			pstmt = DB.prepareStatement(dbpst.toString(), get_TrxName());
@@ -426,8 +428,10 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 			rs = null;
 			pstmt = null;
 		}
-		if (log.isLoggable(Level.FINE)) log.fine("C_TaxCategory_ID=" + C_TaxCategory_ID);
+		if (log.isLoggable(Level.FINE)) log.fine("C_TaxCategory_ID=" + C_TaxCategory_ID);*/
 		//	End Carlos Vargas
+		
+		
 
 		ModelValidationEngine.get().fireImportValidate(this, null, null, ImportValidator.TIMING_AFTER_VALIDATE);
 
@@ -540,7 +544,8 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 					MProduct product = new MProduct(imp);
 					
 					if(imp.get_ValueAsInt("C_TaxCategory_ID") > 0)
-						C_TaxCategory_ID = imp.get_ValueAsInt("C_TaxCategory_ID"); 
+						C_TaxCategory_ID = imp.get_ValueAsInt("C_TaxCategory_ID");
+					
 					
 					product.setC_TaxCategory_ID(C_TaxCategory_ID);
 					ModelValidationEngine.get().fireImportValidate(this, imp, product, ImportValidator.TIMING_AFTER_IMPORT);

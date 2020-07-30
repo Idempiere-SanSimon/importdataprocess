@@ -98,7 +98,14 @@ public class ImportBPBankAccount extends SvrProcess{
 				
 				if(C_BPartner_ID != -1) {				
 					StringBuilder vsql = new StringBuilder();
-					vsql.append("SELECT C_BP_BankAccount_ID FROM C_BP_BankAccount where C_BPartner_ID=").append(rs.getInt("C_BPartner_ID"));
+					
+					vsql.append("SELECT C_BP_BankAccount_ID FROM C_BP_BankAccount where C_BPartner_ID=")
+					.append(rs.getInt("C_BPartner_ID"))
+					.append(" AND C_Bank_ID=")
+					.append(rs.getInt("C_Bank_ID"))
+					.append(" AND AccountNo='")
+					.append(rs.getString("AccountNo")).append("'");
+					
 					int CBPartnerAccount_ID = DB.getSQLValueEx(get_TrxName(), vsql.toString());
 					
 					if(CBPartnerAccount_ID == -1) {
