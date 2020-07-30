@@ -507,6 +507,7 @@ public class ImportPayment extends SvrProcess
 				//	Support for set IsAllocated and IsReconciled 
 				payment.setIsAllocated(imp.get_ValueAsBoolean("IsAllocated"));
 				payment.setIsReconciled(imp.get_ValueAsBoolean("IsReconciled"));
+				payment.setDescription(imp.get_ValueAsString("Description"));
 				//	End Jorge Colmenarez
 				
 				//	Save payment
