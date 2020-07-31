@@ -166,7 +166,7 @@ public class ImportBPBankAccount extends SvrProcess{
 	}
 	
 	public void updateImported(int I_BPartnerBankAccount_ID) {
-		StringBuilder sql = new StringBuilder ("UPDATE I_BPartnerBankAccount as bpi SET I_IsImported='Y' WHERE I_BPartnerBankAccount_ID =")
+		StringBuilder sql = new StringBuilder ("UPDATE I_BPartnerBankAccount as bpi SET I_IsImported='Y', Processed='Y' WHERE I_BPartnerBankAccount_ID =")
 				.append(I_BPartnerBankAccount_ID);
 		DB.executeUpdateEx(sql.toString(), get_TrxName());
 	}
