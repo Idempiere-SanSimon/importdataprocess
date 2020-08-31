@@ -546,8 +546,12 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 					if(imp.get_ValueAsInt("C_TaxCategory_ID") > 0)
 						C_TaxCategory_ID = imp.get_ValueAsInt("C_TaxCategory_ID");
 					
-					
 					product.setC_TaxCategory_ID(C_TaxCategory_ID);
+					//	Set Classification,Group 1 and Group 2
+					product.setClassification(imp.getClassification());
+					product.setGroup1(imp.get_ValueAsString("Group1"));
+					product.setGroup2(imp.get_ValueAsString("Group2"));
+					
 					ModelValidationEngine.get().fireImportValidate(this, imp, product, ImportValidator.TIMING_AFTER_IMPORT);
 					if (product.save())
 					{
@@ -570,11 +574,11 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 						.append("SET (Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
-						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID)= ")
+						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID,Group1,Group2)= ")
 						.append("(SELECT Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
-						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID")
+						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID,Group1,Group2")
 						.append(" FROM I_Product WHERE I_Product_ID=").append(I_Product_ID).append(") ")
 						.append("WHERE M_Product_ID=").append(M_Product_ID);
 					PreparedStatement pstmt_updateProduct = DB.prepareStatement
