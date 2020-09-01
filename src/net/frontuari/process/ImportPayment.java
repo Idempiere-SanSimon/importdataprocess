@@ -413,6 +413,20 @@ public class ImportPayment extends SvrProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			log.warning ("No DocType=" + no);
+		
+		
+		//Add Change by Carlos Vargas
+		
+		//Set Charge
+		sql = new StringBuilder ("UPDATE I_Payment i ")
+			.append("SET C_Charge_ID=(SELECT C_Charge_ID FROM C_Charge cc")
+			.append(" WHERE i.C_Charge_ID=cc.C_Charge_ID AND cc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
+			.append("WHERE C_Charge_ID IS NULL")
+			.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			if (log.isLoggable(Level.INFO)) log.info("Set Charge=" + no);
+		
 
 		commitEx();
 		
@@ -456,6 +470,9 @@ public class ImportPayment extends SvrProcess
 				payment.setSwiftCode(imp.getSwiftCode());
 				payment.setCheckNo(imp.getCheckNo());
 				payment.setMicr(imp.getMicr());
+				
+				//add by carlos vargas
+				payment.setC_Charge_ID(imp.getC_Charge_ID());
 				
 				if (imp.getCreditCardType() != null)
 					payment.setCreditCardType(imp.getCreditCardType());
