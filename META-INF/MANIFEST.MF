@@ -2,14 +2,14 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Import Data Process
 Bundle-SymbolicName: net.frontuari.importdataprocess;singleton:=true
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 7.1.0.qualifier
 Bundle-Vendor: Frontuari, C.A.
 Automatic-Module-Name: net.frontuari.importdataprocess
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.adempiere.base;bundle-version="7.1.0",
  org.adempiere.plugin.utils;bundle-version="7.1.0"
-Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
+Bundle-Activator: org.adempiere.plugin.utils.AdempiereActivator
 Service-Component: OSGI-INF/FTUImportDataProcess.xml
 Export-Package: net.frontuari.factories,
  net.frontuari.process
