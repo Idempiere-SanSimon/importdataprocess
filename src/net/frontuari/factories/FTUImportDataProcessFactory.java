@@ -5,7 +5,10 @@ import org.compiere.process.ProcessCall;
 
 import net.frontuari.process.ImportBPBankAccount;
 import net.frontuari.process.ImportBPartner;
+import net.frontuari.process.ImportGLJournal;
+import net.frontuari.process.ImportInventory;
 import net.frontuari.process.ImportInvoice;
+import net.frontuari.process.ImportOrder;
 import net.frontuari.process.ImportPayment;
 import net.frontuari.process.ImportPriceList;
 import net.frontuari.process.ImportProduct;
@@ -32,6 +35,15 @@ public class FTUImportDataProcessFactory implements IProcessFactory {
 		
 		if(className.equals("net.frontuari.process.ImportInvoice"))
 			return new ImportInvoice();
+
+		if(className.equals("net.frontuari.process.ImportOrder"))
+			return new ImportOrder();
+		
+		if(className.equals("net.frontuari.process.ImportInventory"))
+			return new ImportInventory();
+		
+		if(className.equals("net.frontuari.process.ImportGLJournal"))
+			return new ImportGLJournal();
 		
 		return null;
 	}
