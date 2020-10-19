@@ -692,6 +692,11 @@ public class ImportInvoice extends SvrProcess
 						//	Support for set LVE_POInvoiceNo
 						invoice.set_ValueOfColumn("LVE_POInvoiceNo",imp.getDocumentNo());
 					}
+					//	Added by Jorge Colmenarez, 2020-10-19 15:13 
+					if(imp.get_ValueAsString("LVE_controlNumber") != "")
+					{
+						invoice.set_ValueOfColumn("LVE_controlNumber", imp.get_ValueAsString("LVE_controlNumber"));
+					}
 					//
 					invoice.setC_BPartner_ID(imp.getC_BPartner_ID());
 					invoice.setC_BPartner_Location_ID(imp.getC_BPartner_Location_ID());
