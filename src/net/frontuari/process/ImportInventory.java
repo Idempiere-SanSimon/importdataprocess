@@ -288,6 +288,14 @@ public class ImportInventory extends SvrProcess implements ImportProcess
 			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate (sql.toString (), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set Product from Value=" + no);
+		//product value changed to product name
+		sql = new StringBuilder ("UPDATE I_Inventory i ")
+			  .append("SET M_Product_ID=(SELECT MAX(M_Product_ID) FROM M_Product p")
+			  .append(" WHERE i.ProductName=p.Name AND i.AD_Client_ID=p.AD_Client_ID) ")
+			  .append("WHERE M_Product_ID IS NULL AND ProductName IS NOT NULL")
+			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate (sql.toString (), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set Product from Name=" + no);
 		sql = new StringBuilder ("UPDATE I_Inventory i ")
 				  .append("SET M_Product_ID=(SELECT MAX(M_Product_ID) FROM M_Product p")
 				  .append(" WHERE i.UPC=p.UPC AND i.AD_Client_ID=p.AD_Client_ID) ")

@@ -721,6 +721,7 @@ public class ImportGLJournal extends SvrProcess
 					noInsert++;
 					journal = null;
 				}
+				
 				//	Journal
 				String impJournalDocumentNo = imp.getJournalDocumentNo();
 				if (impJournalDocumentNo == null)
@@ -781,6 +782,7 @@ public class ImportGLJournal extends SvrProcess
 					}
 					noInsertJournal++;
 				}
+				
 
 				//	Lines
 				MJournalLine line = new MJournalLine (journal);
@@ -820,6 +822,8 @@ public class ImportGLJournal extends SvrProcess
 				line.setAmtSourceDr (imp.getAmtSourceDr());
 				line.setAmtAcct (imp.getAmtAcctDr(), imp.getAmtAcctCr());	//	only if not 0
 				line.setDateAcct (imp.getDateAcct());
+				line.setC_Activity_ID(imp.get_ValueAsInt("C_Activity_ID"));//new fields
+				line.setUser1_ID(imp.get_ValueAsInt("User1_ID"));//new fields
 				//
 				line.setC_UOM_ID(imp.getC_UOM_ID());
 				line.setQty(imp.getQty());
