@@ -181,7 +181,15 @@ public class ImportPayment extends SvrProcess
 			if (log.isLoggable(Level.INFO)) log.info("Bank Account=" + no);*/
 		
 		sql = new StringBuilder()
-				.append("update I_Payment i set C_BankAccount_ID = (Select ba.C_BankAccount_ID From C_BankAccount as ba WHERE ba.AccountNo = i.AccountNo)");
+				.append("update I_Payment i set C_BankAccount_ID = (Select ba.C_BankAccount_ID From C_BankAccount ba WHERE ba.AccountNo = i.AccountNo) WHERE i.C_BankAccount_ID IS NULL"
+						+ "(I_isImported<>'Y' AND OR I_isImported IS NULL)").append(clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			if (log.isLoggable(Level.INFO)) log.info("Bank Account=" + no);
+
+		sql = new StringBuilder()
+				.append("update I_Payment i set C_BankAccount_ID = (Select ba.C_BankAccount_ID From C_BankAccount ba WHERE ba.AccountNo = i.BankAccountNo) WHERE i.C_BankAccount_ID IS NULL "
+						+ "(I_isImported<>'Y' AND OR I_isImported IS NULL)").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			if (log.isLoggable(Level.INFO)) log.info("Bank Account=" + no);
@@ -544,6 +552,7 @@ public class ImportPayment extends SvrProcess
 							throw new IllegalStateException("Payment Process Failed: " + payment + " - " + payment.getProcessMsg());
 							
 						}
+						payment.setIsAllocated(imp.get_ValueAsBoolean("IsAllocated"));
 						payment.saveEx();
 					}
 				}
