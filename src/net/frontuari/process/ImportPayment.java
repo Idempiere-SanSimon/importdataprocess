@@ -435,6 +435,27 @@ public class ImportPayment extends SvrProcess
 		if (no != 0)
 			if (log.isLoggable(Level.INFO)) log.info("Set Charge=" + no);
 		
+		//Added by Adonis Castellanos 21/10/2020
+			if (no != 0)
+				log.warning ("No Charge=" + no);
+			
+		sql = new StringBuilder ("UPDATE I_Payment i ")
+				.append("SET C_ConversionType_ID=(SELECT C_ConversionType_ID FROM C_ConversionType cc")
+				.append(" WHERE i.ConversionTypeValue=cc.value AND cc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
+				.append("WHERE C_ConversionType_ID IS NULL AND ConversionTypeValue IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				if (log.isLoggable(Level.INFO)) log.info("Set Charge=" + no);
+			sql = new StringBuilder ("UPDATE I_Payment ")
+				  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No ConversionType, ' ")
+				  .append("WHERE C_ConversionType_ID IS NULL AND ConversionTypeValue IS NOT NULL")
+				  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				log.warning ("No ConversionType=" + no);
+		//End Adonis
+		
 
 		commitEx();
 		
@@ -500,7 +521,6 @@ public class ImportPayment extends SvrProcess
 				payment.setC_Invoice_ID(imp.getC_Invoice_ID());
 				payment.setC_DocType_ID(imp.getC_DocType_ID());
 				payment.setC_Currency_ID(imp.getC_Currency_ID());
-			//	payment.setC_ConversionType_ID(imp.getC_ConversionType_ID());
 				payment.setC_Charge_ID(imp.getC_Charge_ID());
 				payment.setChargeAmt(imp.getChargeAmt());
 				payment.setTaxAmt(imp.getTaxAmt());
@@ -534,6 +554,10 @@ public class ImportPayment extends SvrProcess
 				payment.setIsReconciled(imp.get_ValueAsBoolean("IsReconciled"));
 				payment.setDescription(imp.get_ValueAsString("Description"));
 				//	End Jorge Colmenarez
+				// Added by Adonis Castellanos 21/10/2020
+				if(imp.get_ValueAsInt("C_ConversionType_ID")>0)
+				payment.setC_ConversionType_ID(imp.get_ValueAsInt("C_ConversionType_ID"));
+				// End Adonis
 				
 				//	Save payment
 				if (payment.save())
