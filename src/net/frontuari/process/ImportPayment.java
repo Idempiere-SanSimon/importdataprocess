@@ -181,14 +181,14 @@ public class ImportPayment extends SvrProcess
 			if (log.isLoggable(Level.INFO)) log.info("Bank Account=" + no);*/
 		
 		sql = new StringBuilder()
-				.append("update I_Payment i set C_BankAccount_ID = (Select ba.C_BankAccount_ID From C_BankAccount ba WHERE ba.AccountNo = i.AccountNo) WHERE i.C_BankAccount_ID IS NULL AND"
+				.append("update I_Payment i set C_BankAccount_ID = (Select MAX(ba.C_BankAccount_ID) From C_BankAccount ba WHERE ba.AccountNo = i.AccountNo) WHERE i.C_BankAccount_ID IS NULL AND"
 						+ "(I_isImported<>'Y' OR I_isImported IS NULL)").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			if (log.isLoggable(Level.INFO)) log.info("Bank Account=" + no);
 
 		sql = new StringBuilder()
-				.append("update I_Payment i set C_BankAccount_ID = (Select ba.C_BankAccount_ID From C_BankAccount ba WHERE ba.AccountNo = i.BankAccountNo) WHERE i.C_BankAccount_ID IS NULL AND"
+				.append("update I_Payment i set C_BankAccount_ID = (Select MAX(ba.C_BankAccount_ID) From C_BankAccount ba WHERE ba.AccountNo = i.BankAccountNo) WHERE i.C_BankAccount_ID IS NULL AND"
 						+ "(I_isImported<>'Y' OR I_isImported IS NULL)").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
@@ -215,9 +215,10 @@ public class ImportPayment extends SvrProcess
 			if (log.isLoggable(Level.INFO)) log.info("Set Currency=" + no);
 		//
 		sql = new StringBuilder("UPDATE I_Payment i ")
-			.append("SET C_Currency_ID=(SELECT C_Currency_ID FROM C_BankAccount WHERE C_BankAccount_ID=i.C_BankAccount_ID) ")
-			.append("WHERE i.C_Currency_ID IS NULL ")
-			.append("AND i.ISO_Code IS NULL").append(clientCheck);
+			.append("SET C_Currency_ID=(SELECT C_Currency_ID FROM C_BankAccount WHERE C_BankAccount_ID=i.C_BankAccount_ID)")
+			.append(" WHERE i.C_Currency_ID IS NULL")
+			.append(" AND i.C_BankAccount_ID IS NOT NULL")
+			.append(" AND i.ISO_Code IS NULL").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			if (log.isLoggable(Level.INFO)) log.info("Set Currency=" + no);
@@ -428,8 +429,9 @@ public class ImportPayment extends SvrProcess
 		//Set Charge
 		sql = new StringBuilder ("UPDATE I_Payment i ")
 			.append("SET C_Charge_ID=(SELECT C_Charge_ID FROM C_Charge cc")
-			.append(" WHERE i.C_Charge_ID=cc.C_Charge_ID AND cc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
+			.append(" WHERE i.ChargeName=cc.Name AND cc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
 			.append("WHERE C_Charge_ID IS NULL")
+			.append(" AND ChargeName IS NOT NULL")
 			.append(" AND I_IsImported<>'Y'").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
@@ -440,7 +442,7 @@ public class ImportPayment extends SvrProcess
 				log.warning ("No Charge=" + no);
 			
 		sql = new StringBuilder ("UPDATE I_Payment i ")
-				.append("SET C_ConversionType_ID=(SELECT C_ConversionType_ID FROM C_ConversionType cc")
+				.append("SET C_ConversionType_ID=(SELECT MAX(C_ConversionType_ID) FROM C_ConversionType cc")
 				.append(" WHERE i.ConversionTypeValue=cc.value AND cc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
 				.append("WHERE C_ConversionType_ID IS NULL AND ConversionTypeValue IS NOT NULL")
 				.append(" AND I_IsImported<>'Y'").append(clientCheck);
