@@ -486,7 +486,7 @@ public class ImportPayment extends SvrProcess
 				//	New Payment
 				MPayment payment = new MPayment (m_ctx, 0, get_TrxName());
 				payment.setAD_Org_ID(imp.getAD_Org_ID());
-				payment.setDocumentNo(imp.getDocumentNo());
+				payment.setDocumentNo(imp.get_ValueAsString("DocumentNo"));
 				payment.setPONum(imp.getPONum());
 				
 				payment.setTrxType(imp.getTrxType());

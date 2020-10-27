@@ -283,7 +283,7 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 		if (log.isLoggable(Level.FINE)) log.fine("Set UOM Default=" + no);
 		//
 		sql = new StringBuilder ("UPDATE I_Product i ")
-			.append("SET C_UOM_ID = (SELECT C_UOM_ID FROM C_UOM u WHERE u.X12DE355=i.X12DE355 AND u.AD_Client_ID IN (0,i.AD_Client_ID))")
+			.append("SET C_UOM_ID = (SELECT MAX(C_UOM_ID) FROM C_UOM u WHERE u.X12DE355=i.X12DE355 AND u.AD_Client_ID IN (0,i.AD_Client_ID))")
 			.append("WHERE C_UOM_ID IS NULL")
 			.append(" AND I_IsImported<>'Y'").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
@@ -403,6 +403,60 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 		if (no != 0)
 			log.warning("Invalid Tax Category=" + no);
 		//	End Jorge Colmenarez
+		
+		// Added by Adonis Castellanos 21/10/2020
+		sql = new StringBuilder ("UPDATE I_Product i ")
+				.append("SET FTU_ProductClassifications_ID = ")
+				.append("(SELECT MAX(FTU_ProductClassifications_ID) FROM FTU_ProductClassifications pc WHERE pc.Value = i.ProductClassificationsValue AND pc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
+				.append("WHERE ProductClassificationsValue IS NOT NULL AND FTU_ProductClassifications_ID IS NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set Product Classifications=" + no);
+			//
+		sql = new StringBuilder ("UPDATE I_Product ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Product Classifications, ' ")
+				.append("WHERE FTU_ProductClassifications_ID IS NULL AND ProductClassificationsValue IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				log.warning("Invalid Product Classifications=" + no);
+			
+			
+		sql = new StringBuilder ("UPDATE I_Product i ")
+				.append("SET FTU_ProductClassifications2_ID = ")
+				.append("(SELECT MAX(FTU_ProductClassifications_ID) FROM FTU_ProductClassifications pc WHERE pc.Value = i.ProductClassifications2Value AND pc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
+				.append("WHERE ProductClassifications2Value IS NOT NULL AND FTU_ProductClassifications2_ID IS NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set Product Classifications2=" + no);
+				//
+		sql = new StringBuilder ("UPDATE I_Product ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Product Classifications2, ' ")
+				.append("WHERE FTU_ProductClassifications2_ID IS NULL AND ProductClassifications2Value IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				log.warning("Invalid Product Classifications2=" + no);
+				
+				
+		sql = new StringBuilder ("UPDATE I_Product i ")
+				.append("SET FTU_ProductClassifications3_ID = ")
+				.append("(SELECT MAX(FTU_ProductClassifications_ID) FROM FTU_ProductClassifications pc WHERE pc.Value = i.ProductClassifications3Value AND pc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
+				.append("WHERE ProductClassifications3Value IS NOT NULL AND FTU_ProductClassifications3_ID IS NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set Product Classifications3=" + no);
+					//
+		sql = new StringBuilder ("UPDATE I_Product ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Product Classifications3, ' ")
+				.append("WHERE FTU_ProductClassifications3_ID IS NULL AND ProductClassifications3Value IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				log.warning("Invalid Product Classifications3=" + no);
+			
+			// End Adonis
+		
 		
 		
 		//	Added by Carlos Vargas  
@@ -551,6 +605,15 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 					product.setClassification(imp.getClassification());
 					product.setGroup1(imp.get_ValueAsString("Group1"));
 					product.setGroup2(imp.get_ValueAsString("Group2"));
+					if(imp.get_Value("BIOTypePOS")!=null)
+						product.set_ValueOfColumn("BIOTypePOS", imp.get_Value("BIOTypePOS"));
+					if(imp.get_ValueAsInt("FTU_ProductClassifications_ID")>0)
+						product.set_ValueOfColumn("FTU_ProductClassifications_ID", imp.get_ValueAsInt("FTU_ProductClassifications_ID"));
+					if(imp.get_ValueAsInt("FTU_ProductClassifications2_ID")>0)
+						product.set_ValueOfColumn("FTU_ProductClassifications2_ID", imp.get_ValueAsInt("FTU_ProductClassifications2_ID"));
+					if(imp.get_ValueAsInt("FTU_ProductClassifications3_ID")>0)
+						product.set_ValueOfColumn("FTU_ProductClassifications3_ID", imp.get_ValueAsInt("FTU_ProductClassifications3_ID"));
+					
 					
 					ModelValidationEngine.get().fireImportValidate(this, imp, product, ImportValidator.TIMING_AFTER_IMPORT);
 					if (product.save())
@@ -574,11 +637,13 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 						.append("SET (Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
-						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID,Group1,Group2)= ")
+						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID,Group1,Group2,BIOTypePOS"
+								+ ",FTU_ProductClassifications_ID,FTU_ProductClassifications2_ID,FTU_ProductClassifications3_ID)= ")
 						.append("(SELECT Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
-						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID,Group1,Group2")
+						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID,Group1,Group2,BIOTypePOS"
+								+ ",FTU_ProductClassifications_ID,FTU_ProductClassifications2_ID,FTU_ProductClassifications3_ID")
 						.append(" FROM I_Product WHERE I_Product_ID=").append(I_Product_ID).append(") ")
 						.append("WHERE M_Product_ID=").append(M_Product_ID);
 					PreparedStatement pstmt_updateProduct = DB.prepareStatement

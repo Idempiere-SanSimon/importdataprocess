@@ -268,14 +268,13 @@ public class ImportGLJournal extends SvrProcess
 		if (no != 0)
 			log.warning ("Invalid CurrencyTypeValue=" + no);
 
-
-		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+		/*sql = new StringBuilder ("UPDATE I_GLJournal i ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No ConversionType, '")
 			.append("WHERE (C_ConversionType_ID IS NULL OR C_ConversionType_ID=0)")
 			.append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
-			log.warning ("No CourrencyType=" + no);
+			log.warning ("No CourrencyType=" + no);*/
 
 		//	Set/Overwrite Home Currency Rate
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
@@ -656,11 +655,11 @@ public class ImportGLJournal extends SvrProcess
 		String JournalDocumentNo = "";
 		Timestamp DateAcct = null;
 		boolean wasCreateNewBatch = false;
-
+		int prevOrgId = 0;
 		//	Go through Journal Records
 		sql = new StringBuilder ("SELECT * FROM I_GLJournal ")
 			.append("WHERE I_IsImported='N'").append (clientCheck)
-			.append(" ORDER BY COALESCE(BatchDocumentNo, TO_NCHAR(I_GLJournal_ID)||' '), COALESCE(JournalDocumentNo, ")
+			.append(" ORDER BY AD_Org_ID,COALESCE(BatchDocumentNo, TO_NCHAR(I_GLJournal_ID)||' '), COALESCE(JournalDocumentNo, ")
 					.append("TO_NCHAR(I_GLJournal_ID)||' '), C_AcctSchema_ID, PostingType, C_DocType_ID, GL_Category_ID, ")
 					.append("C_Currency_ID, TRUNC(DateAcct), Line, I_GLJournal_ID");
 		try
@@ -729,6 +728,7 @@ public class ImportGLJournal extends SvrProcess
 				Timestamp impDateAcct = TimeUtil.getDay(imp.getDateAcct());
 				if (journal == null
 					|| imp.isCreateNewJournal()
+					|| prevOrgId!=imp.getAD_OrgDoc_ID()
 					|| !JournalDocumentNo.equals(impJournalDocumentNo)
 					|| journal.getC_DocType_ID() != imp.getC_DocType_ID()
 					|| journal.getGL_Category_ID() != imp.getGL_Category_ID()
