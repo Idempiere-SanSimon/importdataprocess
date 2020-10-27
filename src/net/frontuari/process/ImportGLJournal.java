@@ -380,7 +380,7 @@ public class ImportGLJournal extends SvrProcess
 		if (log.isLoggable(Level.FINE)) log.fine("Set Org from Value=" + no);
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
 			.append("SET AD_Org_ID=AD_OrgDoc_ID ")
-			.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0) AND OrgValue IS NULL AND AD_OrgDoc_ID IS NOT NULL AND AD_OrgDoc_ID<>0")
+			.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0) AND (OrgValue IS NULL OR OrgValue='') AND AD_OrgDoc_ID IS NOT NULL AND AD_OrgDoc_ID<>0")
 			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set Org from Doc Org=" + no);
@@ -670,7 +670,7 @@ public class ImportGLJournal extends SvrProcess
 			while (rs.next())
 			{
 				X_I_GLJournal imp = new X_I_GLJournal (getCtx (), rs, get_TrxName());
-				int Doc_BPartner_ID = rs.getInt("Doc_BPartner_ID");
+				int Doc_BPartner_ID =0;// rs.getInt("Doc_BPartner_ID");
 				//	New Batch if Batch Document No changes
 				String impBatchDocumentNo = imp.getBatchDocumentNo();
 				if (impBatchDocumentNo == null)
@@ -728,7 +728,7 @@ public class ImportGLJournal extends SvrProcess
 				Timestamp impDateAcct = TimeUtil.getDay(imp.getDateAcct());
 				if (journal == null
 					|| imp.isCreateNewJournal()
-					|| prevOrgId!=imp.getAD_OrgDoc_ID()
+					|| prevOrgId!=imp.getAD_Org_ID()
 					|| !JournalDocumentNo.equals(impJournalDocumentNo)
 					|| journal.getC_DocType_ID() != imp.getC_DocType_ID()
 					|| journal.getGL_Category_ID() != imp.getGL_Category_ID()
@@ -743,7 +743,7 @@ public class ImportGLJournal extends SvrProcess
 					journal = new MJournal (getCtx(), 0, get_TrxName());
 					if (batch != null)
 						journal.setGL_JournalBatch_ID(batch.getGL_JournalBatch_ID());
-					journal.setClientOrg(imp.getAD_Client_ID(), imp.getAD_OrgDoc_ID());
+					journal.setClientOrg(imp.getAD_Client_ID(), imp.getAD_Org_ID());
 					//
 					String description = imp.getBatchDescription();
 					if (description == null || description.length() == 0)
@@ -780,6 +780,7 @@ public class ImportGLJournal extends SvrProcess
 						}
 						break;
 					}
+					prevOrgId=imp.getAD_Org_ID();
 					noInsertJournal++;
 				}
 				
