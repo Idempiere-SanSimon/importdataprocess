@@ -539,6 +539,22 @@ public class ImportOrder extends SvrProcess
 					no = DB.executeUpdate(sql.toString(), get_TrxName());
 					if (no != 0)
 						log.warning("No User1Name=" + no);
+					
+					// Set Conversion Type
+					sql = new StringBuilder ("UPDATE I_Order o ")
+							.append("SET C_ConversionType_ID=(SELECT C_ConversionType_ID FROM C_ConversionType a")
+							.append(" WHERE o.ConversionTypeValue=a.Value AND a.AD_Client_ID = o.AD_Client_ID) ")
+							.append(" WHERE C_ConversionType_ID IS NULL and ConversionTypeValue IS NOT NULL")
+							.append(" AND I_IsImported<>'Y'").append (clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					log.fine("Set C_ConversionType_ID=" + no);
+					sql = new StringBuilder ("UPDATE I_Order ")
+							.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid ConversionTypeValue, ' ")
+							.append("WHERE C_ConversionType_ID IS NULL AND (ConversionTypeValue IS NOT NULL)")
+							.append(" AND I_IsImported<>'Y' ").append (clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					if (no != 0)
+						log.warning ("Invalid ConversionTypeValue=" + no);
 		commitEx();
 		
 		//	-- New BPartner ---------------------------------------------------
@@ -781,6 +797,10 @@ public class ImportOrder extends SvrProcess
 					if (imp.get_ValueAsInt("User1_ID") != 0)
 						order.setUser1_ID(imp.get_ValueAsInt("User1_ID"));
 				
+					//Conversion Type
+					int C_ConversionType_ID = imp.get_ValueAsInt("C_ConversionType_ID");
+					if(C_ConversionType_ID>0)
+						order.setC_ConversionType_ID(C_ConversionType_ID);
 					// Set Order Source
 					if (imp.getC_OrderSource() != null)
 						order.setC_OrderSource_ID(imp.getC_OrderSource_ID());

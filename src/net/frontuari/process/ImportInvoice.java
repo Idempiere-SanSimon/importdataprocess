@@ -494,6 +494,22 @@ public class ImportInvoice extends SvrProcess
 		if (no != 0)
 			log.warning ("Invalid C_1099Box_Value=" + no);
 		
+		// Set Conversion Type
+				sql = new StringBuilder ("UPDATE I_Invoice o ")
+						.append("SET C_ConversionType_ID=(SELECT C_ConversionType_ID FROM C_ConversionType a")
+						.append(" WHERE o.ConversionTypeValue=a.Value AND a.AD_Client_ID = o.AD_Client_ID) ")
+						.append(" WHERE C_ConversionType_ID IS NULL and ConversionTypeValue IS NOT NULL")
+						.append(" AND I_IsImported<>'Y'").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				log.fine("Set C_ConversionType_ID=" + no);
+				sql = new StringBuilder ("UPDATE I_Invoice ")
+						.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid ConversionTypeValue, ' ")
+						.append("WHERE C_ConversionType_ID IS NULL AND (ConversionTypeValue IS NOT NULL)")
+						.append(" AND I_IsImported<>'Y' ").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+					log.warning ("Invalid ConversionTypeValue=" + no);
+		
 		commitEx();
 		
 		//	-- New BPartner ---------------------------------------------------
@@ -726,6 +742,11 @@ public class ImportInvoice extends SvrProcess
 						invoice.setDateInvoiced(imp.getDateInvoiced());
 					if (imp.getDateAcct() != null)
 						invoice.setDateAcct(imp.getDateAcct());
+
+					//Conversion Type
+					int C_ConversionType_ID = imp.get_ValueAsInt("C_ConversionType_ID");
+					if(C_ConversionType_ID>0)
+						invoice.setC_ConversionType_ID(C_ConversionType_ID);
 					//
 					invoice.saveEx();
 					noInsert++;

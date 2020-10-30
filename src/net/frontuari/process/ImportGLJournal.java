@@ -552,13 +552,13 @@ public class ImportGLJournal extends SvrProcess
 
 		//	Accounted Amounts (Only if No Error)
 		sql = new StringBuilder ("UPDATE I_GLJournal ")
-			.append("SET AmtAcctDr = ROUND(AmtSourceDr * CurrencyRate, 2) ")	//	HARDCODED rounding
+			.append("SET AmtAcctDr = ROUND(AmtSourceDr * CurrencyRate, 5) ")	//	HARDCODED rounding
 			.append("WHERE AmtAcctDr IS NULL OR AmtAcctDr=0")
 			.append(" AND I_IsImported='N'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Calculate Acct Dr=" + no);
 		sql = new StringBuilder ("UPDATE I_GLJournal ")
-			.append("SET AmtAcctCr = ROUND(AmtSourceCr * CurrencyRate, 2) ")
+			.append("SET AmtAcctCr = ROUND(AmtSourceCr * CurrencyRate, 5) ")
 			.append("WHERE AmtAcctCr IS NULL OR AmtAcctCr=0")
 			.append(" AND I_IsImported='N'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
