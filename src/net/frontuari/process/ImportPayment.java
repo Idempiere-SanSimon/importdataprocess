@@ -491,6 +491,10 @@ public class ImportPayment extends SvrProcess
 				payment.setDocumentNo(imp.get_ValueAsString("DocumentNo"));
 				payment.setPONum(imp.getPONum());
 				
+				//added by Adonis Castellanos
+				if(imp.get_ValueAsString("Description")!=null)
+					payment.setDescription(imp.get_ValueAsString("Description"));
+				
 				payment.setTrxType(imp.getTrxType());
 				payment.setTenderType(imp.getTenderType());
 				
