@@ -106,7 +106,7 @@ public class ImportInvoice extends SvrProcess
 		//	Set Client, Org, IsActive, Created/Updated
 		sql = new StringBuilder ("UPDATE I_Invoice ")
 			  .append("SET AD_Client_ID = COALESCE (AD_Client_ID,").append (m_AD_Client_ID).append ("),")
-			  .append(" AD_Org_ID = COALESCE (AD_Org_ID,").append (m_AD_Org_ID).append ("),")
+			 // .append(" AD_Org_ID = COALESCE (AD_Org_ID,").append (m_AD_Org_ID).append ("),")
 			  .append(" IsActive = COALESCE (IsActive, 'Y'),")
 			  .append(" Created = COALESCE (Created, SysDate),")
 			  .append(" CreatedBy = COALESCE (CreatedBy, 0),")
@@ -117,15 +117,41 @@ public class ImportInvoice extends SvrProcess
 			  .append("WHERE I_IsImported<>'Y' OR I_IsImported IS NULL");
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.INFO)) log.info ("Reset=" + no);
+		
+		//	Org
+		sql = new StringBuilder ("UPDATE I_Invoice o ")
+			  .append("SET AD_Org_ID=(SELECT AD_Org_ID FROM AD_Org d WHERE d.Value=o.OrgValue")
+			  .append(" AND o.AD_Client_ID=d.AD_Client_ID) ")
+			  .append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID = 0) AND OrgValue IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		
 
 		sql = new StringBuilder ("UPDATE I_Invoice o ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org, '")
 			.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0")
-			.append(" OR EXISTS (SELECT * FROM AD_Org oo WHERE o.AD_Org_ID=oo.AD_Org_ID AND (oo.IsSummary='Y' OR oo.IsActive='N')))")
-			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+			//.append(" OR EXISTS (SELECT * FROM AD_Org oo WHERE o.AD_Org_ID=oo.AD_Org_ID AND (oo.IsSummary='Y' OR oo.IsActive='N'))")
+			.append(") AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			log.warning ("Invalid Org=" + no);
+		
+
+		//added by Adonis
+		sql = new StringBuilder ("UPDATE I_Invoice o")
+			.append(" SET C_Currency_ID=(SELECT C_Currency_ID FROM C_Currency c")
+			.append(" WHERE o.ISO_Code=c.ISO_Code)")
+			.append(" WHERE C_Currency_ID IS NULL")
+			.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.INFO)) log.info("doIt- Set Currency=" + no);
+		//
+		sql = new StringBuilder ("UPDATE I_Invoice ")
+			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Currency,' ")
+			.append("WHERE C_Currency_ID IS NULL")
+			.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning("Invalid Currency=" + no);
 
 		//	Document Type - PO - SO
 		sql = new StringBuilder ("UPDATE I_Invoice o ")
@@ -494,6 +520,39 @@ public class ImportInvoice extends SvrProcess
 		if (no != 0)
 			log.warning ("Invalid C_1099Box_Value=" + no);
 		
+		// Set Conversion Type
+				sql = new StringBuilder ("UPDATE I_Invoice o ")
+						.append("SET C_ConversionType_ID=(SELECT C_ConversionType_ID FROM C_ConversionType a")
+						.append(" WHERE o.ConversionTypeValue=a.Value AND a.AD_Client_ID = o.AD_Client_ID) ")
+						.append(" WHERE C_ConversionType_ID IS NULL and ConversionTypeValue IS NOT NULL")
+						.append(" AND I_IsImported<>'Y'").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				log.fine("Set C_ConversionType_ID=" + no);
+				sql = new StringBuilder ("UPDATE I_Invoice ")
+						.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid ConversionTypeValue, ' ")
+						.append("WHERE C_ConversionType_ID IS NULL AND (ConversionTypeValue IS NOT NULL)")
+						.append(" AND I_IsImported<>'Y' ").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+					log.warning ("Invalid ConversionTypeValue=" + no);
+				
+
+				//User1
+				sql = new StringBuilder ("UPDATE I_Invoice o ")
+						  .append("SET User1_ID=(SELECT C_ElementValue_ID FROM C_ElementValue c")
+						  .append(" WHERE o.User1Name=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
+						  .append("WHERE User1_ID IS NULL AND User1Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					if (log.isLoggable(Level.FINE)) log.fine("Set User1=" + no);
+					// Set proper error message
+					sql = new StringBuilder ("UPDATE I_Invoice ")
+						  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found User1_ID, ' ")
+						  .append("WHERE User1_ID IS NULL AND User1Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					if (no != 0)
+						log.warning("No User1Name=" + no);
+					
+		
 		commitEx();
 		
 		//	-- New BPartner ---------------------------------------------------
@@ -726,6 +785,14 @@ public class ImportInvoice extends SvrProcess
 						invoice.setDateInvoiced(imp.getDateInvoiced());
 					if (imp.getDateAcct() != null)
 						invoice.setDateAcct(imp.getDateAcct());
+
+
+					if (imp.get_ValueAsInt("User1_ID") > 0)
+						invoice.setUser1_ID(imp.get_ValueAsInt("User1_ID"));
+					//Conversion Type
+					int C_ConversionType_ID = imp.get_ValueAsInt("C_ConversionType_ID");
+					if(C_ConversionType_ID>0)
+						invoice.setC_ConversionType_ID(C_ConversionType_ID);
 					//
 					invoice.saveEx();
 					noInsert++;

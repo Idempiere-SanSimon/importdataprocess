@@ -114,6 +114,7 @@ public class ImportOrder extends SvrProcess
 			  .append(" CreatedBy = COALESCE (CreatedBy, 0),")
 			  .append(" Updated = COALESCE (Updated, SysDate),")
 			  .append(" UpdatedBy = COALESCE (UpdatedBy, 0),")
+			  .append(" Description = substring(Description,0,250),")
 			  .append(" I_ErrorMsg = ' ',")
 			  .append(" I_IsImported = 'N' ")
 			  .append("WHERE I_IsImported<>'Y' OR I_IsImported IS NULL");
@@ -519,7 +520,7 @@ public class ImportOrder extends SvrProcess
 				if (log.isLoggable(Level.FINE)) log.fine("Set Activity=" + no);
 				// Set proper error message
 				sql = new StringBuilder ("UPDATE I_Order ")
-					  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found UOM, ' ")
+					  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Activity, ' ")
 					  .append("WHERE C_Activity_ID IS NULL AND ActivityName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
 				no = DB.executeUpdate(sql.toString(), get_TrxName());
 				if (no != 0)
@@ -534,11 +535,27 @@ public class ImportOrder extends SvrProcess
 					if (log.isLoggable(Level.FINE)) log.fine("Set User1=" + no);
 					// Set proper error message
 					sql = new StringBuilder ("UPDATE I_Order ")
-						  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found UOM, ' ")
+						  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found User1_ID, ' ")
 						  .append("WHERE User1_ID IS NULL AND User1Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
 					no = DB.executeUpdate(sql.toString(), get_TrxName());
 					if (no != 0)
 						log.warning("No User1Name=" + no);
+					
+					// Set Conversion Type
+					sql = new StringBuilder ("UPDATE I_Order o ")
+							.append("SET C_ConversionType_ID=(SELECT C_ConversionType_ID FROM C_ConversionType a")
+							.append(" WHERE o.ConversionTypeValue=a.Value AND a.AD_Client_ID = o.AD_Client_ID) ")
+							.append(" WHERE C_ConversionType_ID IS NULL and ConversionTypeValue IS NOT NULL")
+							.append(" AND I_IsImported<>'Y'").append (clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					log.fine("Set C_ConversionType_ID=" + no);
+					sql = new StringBuilder ("UPDATE I_Order ")
+							.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid ConversionTypeValue, ' ")
+							.append("WHERE C_ConversionType_ID IS NULL AND (ConversionTypeValue IS NOT NULL)")
+							.append(" AND I_IsImported<>'Y' ").append (clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					if (no != 0)
+						log.warning ("Invalid ConversionTypeValue=" + no);
 		commitEx();
 		
 		//	-- New BPartner ---------------------------------------------------
@@ -689,7 +706,7 @@ public class ImportOrder extends SvrProcess
 		//	Go through Order Records w/o
 		sql = new StringBuilder ("SELECT * FROM I_Order ")
 			  .append("WHERE I_IsImported='N'").append (clientCheck)
-			.append(" ORDER BY C_BPartner_ID, BillTo_ID, C_BPartner_Location_ID, I_Order_ID");
+			.append(" ORDER BY AD_Org_ID,C_BPartner_ID,C_DocType_ID,DocumentNo, BillTo_ID, C_BPartner_Location_ID, I_Order_ID");
 		try
 		{
 			pstmt = DB.prepareStatement (sql.toString(), get_TrxName());
@@ -781,6 +798,10 @@ public class ImportOrder extends SvrProcess
 					if (imp.get_ValueAsInt("User1_ID") != 0)
 						order.setUser1_ID(imp.get_ValueAsInt("User1_ID"));
 				
+					//Conversion Type
+					int C_ConversionType_ID = imp.get_ValueAsInt("C_ConversionType_ID");
+					if(C_ConversionType_ID>0)
+						order.setC_ConversionType_ID(C_ConversionType_ID);
 					// Set Order Source
 					if (imp.getC_OrderSource() != null)
 						order.setC_OrderSource_ID(imp.getC_OrderSource_ID());
