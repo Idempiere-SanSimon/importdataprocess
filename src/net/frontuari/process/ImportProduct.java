@@ -25,13 +25,14 @@ import java.util.logging.Level;
 
 import org.adempiere.model.ImportValidator;
 import org.adempiere.process.ImportProcess;
-import org.compiere.model.MProduct;
 import org.compiere.model.MProductPrice;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.X_I_Product;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
+
+import net.frontuari.model.MFTUProduct;
 
 /**
  *	Import Products from I_Product
@@ -352,13 +353,13 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 			log.warning("Not Unique UPC=" + no);
 
 		//	Mandatory Value
-		sql = new StringBuilder ("UPDATE I_Product i ")
+		/*sql = new StringBuilder ("UPDATE I_Product i ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Mandatory Value,' ")
 			.append("WHERE Value IS NULL")
 			.append(" AND I_IsImported<>'Y'").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
-			log.warning("No Mandatory Value=" + no);
+			log.warning("No Mandatory Value=" + no);*/
 
 		//	Vendor Product No
 	//	sql = new StringBuffer ("UPDATE I_Product i "
@@ -541,7 +542,7 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 				//	Product
 				if (newProduct)			//	Insert new Product
 				{
-					MProduct product = new MProduct(imp);
+					MFTUProduct product = new MFTUProduct(imp);
 					
 					if(imp.get_ValueAsInt("C_TaxCategory_ID") > 0)
 						C_TaxCategory_ID = imp.get_ValueAsInt("C_TaxCategory_ID");
