@@ -21,18 +21,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Optional;
 import java.util.logging.Level;
 
 import org.adempiere.model.ImportValidator;
 import org.adempiere.process.ImportProcess;
+import org.compiere.model.MProduct;
 import org.compiere.model.MProductPrice;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.X_I_Product;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
-
-import net.frontuari.model.MFTUProduct;
 
 /**
  *	Import Products from I_Product
@@ -542,8 +542,9 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 				//	Product
 				if (newProduct)			//	Insert new Product
 				{
-					MFTUProduct product = new MFTUProduct(imp);
+					MProduct product = new MProduct(imp);
 					
+					product.setValue(Optional.ofNullable(imp.getValue()).orElse(""));
 					if(imp.get_ValueAsInt("C_TaxCategory_ID") > 0)
 						C_TaxCategory_ID = imp.get_ValueAsInt("C_TaxCategory_ID");
 					
