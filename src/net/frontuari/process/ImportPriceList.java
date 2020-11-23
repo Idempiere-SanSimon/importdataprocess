@@ -436,21 +436,24 @@ public class ImportPriceList extends SvrProcess
 								, p_importPriceLimit?imp.getPriceLimit():Env.ZERO);
 						isInsert = true;
 					}
-					if (pp.save())
+					if(pp != null)
 					{
-						log.finer("Insert/Update Product Price");
-						if (isInsert)
-							noInsertpp++;
+						if (pp.save())
+						{
+							log.finer("Insert/Update Product Price");
+							if (isInsert)
+								noInsertpp++;
+							else
+								noUpdatepp++;
+						}
 						else
-							noUpdatepp++;
-					}
-					else
-					{
-						StringBuilder sql0 = new StringBuilder ("UPDATE I_PriceList i ")
-							.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||").append(DB.TO_STRING("Insert/Update Product Price failed"))
-							.append("WHERE I_PriceList_ID=").append(I_PriceList_ID);
-						DB.executeUpdate(sql0.toString(), get_TrxName());
-						continue;
+						{
+							StringBuilder sql0 = new StringBuilder ("UPDATE I_PriceList i ")
+								.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||").append(DB.TO_STRING("Insert/Update Product Price failed"))
+								.append("WHERE I_PriceList_ID=").append(I_PriceList_ID);
+							DB.executeUpdate(sql0.toString(), get_TrxName());
+							continue;
+						}
 					}
 				}
 				
