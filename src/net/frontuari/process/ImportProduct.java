@@ -21,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Optional;
 import java.util.logging.Level;
 
 import org.adempiere.model.ImportValidator;
@@ -352,13 +353,13 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 			log.warning("Not Unique UPC=" + no);
 
 		//	Mandatory Value
-		sql = new StringBuilder ("UPDATE I_Product i ")
+		/*sql = new StringBuilder ("UPDATE I_Product i ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Mandatory Value,' ")
 			.append("WHERE Value IS NULL")
 			.append(" AND I_IsImported<>'Y'").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
-			log.warning("No Mandatory Value=" + no);
+			log.warning("No Mandatory Value=" + no);*/
 
 		//	Vendor Product No
 	//	sql = new StringBuffer ("UPDATE I_Product i "
@@ -597,6 +598,7 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 				{
 					MProduct product = new MProduct(imp);
 					
+					product.setValue(Optional.ofNullable(imp.getValue()).orElse(""));
 					if(imp.get_ValueAsInt("C_TaxCategory_ID") > 0)
 						C_TaxCategory_ID = imp.get_ValueAsInt("C_TaxCategory_ID");
 					
