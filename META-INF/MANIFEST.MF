@@ -12,4 +12,6 @@ Require-Bundle: org.adempiere.base;bundle-version="7.1.0",
 Bundle-Activator: org.adempiere.plugin.utils.AdempiereActivator
 Service-Component: OSGI-INF/FTUImportDataProcess.xml
 Export-Package: net.frontuari.factories,
- net.frontuari.process
+ net.frontuari.process,
+ net.frontuari.model
+
