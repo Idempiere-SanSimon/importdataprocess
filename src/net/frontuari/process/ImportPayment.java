@@ -457,7 +457,25 @@ public class ImportPayment extends SvrProcess
 			if (no != 0)
 				log.warning ("No ConversionType=" + no);
 		//End Adonis
-		
+			
+		// Added by Adonis Castellanos 12/01/2021
+		//	CashCollection
+			sql = new StringBuilder ("UPDATE I_Payment i ")
+				  .append("SET FTU_CashCollection_ID=(SELECT MAX(FTU_CashCollection_ID) FROM FTU_CashCollection ii")
+				  .append(" WHERE i.CashCollectionDocNo=ii.DocumentNo AND i.AD_Client_ID=ii.AD_Client_ID) ")
+				  .append("WHERE FTU_CashCollection_ID IS NULL AND CashCollectionDocNo IS NOT NULL")
+				  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				if (log.isLoggable(Level.FINE)) log.fine("Set FTU_CashCollection_ID from DocumentNo=" + no);
+			sql = new StringBuilder ("UPDATE I_Payment ")
+					  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No CashCollection, ' ")
+					  .append("WHERE FTU_CashCollection_ID IS NULL AND CashCollectionDocNo IS NOT NULL")
+					  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+					log.warning ("No CashCollection=" + no);
+			//End Adonis
 
 		commitEx();
 		
@@ -562,7 +580,13 @@ public class ImportPayment extends SvrProcess
 				//	End Jorge Colmenarez
 				// Added by Adonis Castellanos 21/10/2020
 				if(imp.get_ValueAsInt("C_ConversionType_ID")>0)
-				payment.setC_ConversionType_ID(imp.get_ValueAsInt("C_ConversionType_ID"));
+					payment.setC_ConversionType_ID(imp.get_ValueAsInt("C_ConversionType_ID"));
+				// End Adonis
+				// Added by Adonis Castellanos 12/01/2021
+				if(imp.get_ValueAsInt("FTU_CashCollection_ID")>0)
+					payment.set_ValueOfColumn("FTU_CashCollection_ID", imp.get_ValueAsInt("FTU_CashCollection_ID"));
+				if(imp.get_ValueAsInt("FTU_SalesShift_ID")>0)
+					payment.set_ValueOfColumn("FTU_SalesShift_ID", imp.get_ValueAsInt("FTU_SalesShift_ID"));
 				// End Adonis
 				
 				//	Save payment
