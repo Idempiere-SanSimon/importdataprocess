@@ -608,6 +608,7 @@ public class ImportPayment extends SvrProcess
 						}
 						payment.setIsAllocated(imp.get_ValueAsBoolean("IsAllocated"));
 						payment.saveEx();
+						commitEx();
 					}
 				}
 				
