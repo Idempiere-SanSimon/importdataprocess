@@ -5,6 +5,7 @@ import org.compiere.process.ProcessCall;
 
 import net.frontuari.process.ImportBPBankAccount;
 import net.frontuari.process.ImportBPartner;
+import net.frontuari.process.ImportDiscountSchema;
 import net.frontuari.process.ImportGLJournal;
 import net.frontuari.process.ImportInventory;
 import net.frontuari.process.ImportInvoice;
@@ -44,6 +45,8 @@ public class FTUImportDataProcessFactory implements IProcessFactory {
 		
 		if(className.equals("net.frontuari.process.ImportGLJournal"))
 			return new ImportGLJournal();
+		if(className.equals("net.frontuari.process.ImportDiscountSchema"))
+			return new ImportDiscountSchema();
 		
 		return null;
 	}
