@@ -229,15 +229,33 @@ public class ImportDiscountSchema extends SvrProcess {
 						.append(" AND I_IsImported<>'Y'").append(clientCheck);
 					no = DB.executeUpdate(sql.toString(), get_TrxName());
 					if (log.isLoggable(Level.INFO)) log.info("Org=" + no);
-				
-					sql = new StringBuilder ("UPDATE I_DiscountSchema i ")
-							.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org,' ")
-							.append("WHERE AD_OrgTrx_ID IS NULL AND OrgName IS NOT NULL")
-							.append(" AND I_IsImported<>'Y'").append(clientCheck);
-						no = DB.executeUpdate(sql.toString(), get_TrxName());
-						if (no != 0)
-							log.warning("Invalid ORG=" + no);
+			
+				sql = new StringBuilder ("UPDATE I_DiscountSchema i ")
+						.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org,' ")
+						.append("WHERE AD_OrgTrx_ID IS NULL AND OrgName IS NOT NULL")
+						.append(" AND I_IsImported<>'Y'").append(clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					if (no != 0)
+						log.warning("Invalid ORG=" + no);
+					
+				//M_DiscountSchema_ID
+				sql = new StringBuilder ("UPDATE I_DiscountSchema i ")
+						.append("SET M_DiscountSchema_ID=(SELECT M_DiscountSchema_ID FROM M_DiscountSchema p")
+						.append(" WHERE TRIM(i.Name)=TRIM(p.Name) AND i.AD_Client_ID=p.AD_Client_ID) ")
+						.append("WHERE M_DiscountSchema_ID IS NULL AND Name IS NOT NULL AND AD_Client_ID IS NOT NULL")
+						.append(" AND I_IsImported<>'Y'").append(clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					if (log.isLoggable(Level.INFO)) log.info("M_DiscountSchema_ID=" + no);
 
+				//M_DiscountSchemaLine_ID
+				sql = new StringBuilder ("UPDATE I_DiscountSchema i ")
+						.append("SET M_DiscountSchemaLine_ID=(SELECT M_DiscountSchemaLine_ID FROM M_DiscountSchemaLine p")
+						.append(" WHERE i.M_DiscountSchema_ID=p.M_DiscountSchema_ID AND i.M_Product_ID=p.M_Product_ID) ")
+						.append("WHERE M_DiscountSchemaLine_ID IS NULL AND M_DiscountSchema_ID IS NOT NULL AND M_Product_ID IS NOT NULL")
+						.append(" AND I_IsImported<>'Y'").append(clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					if (log.isLoggable(Level.INFO)) log.info("M_DiscountSchemaLine_ID=" + no);
+						
 				
 		commitEx();
 		//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -303,8 +321,8 @@ public class ImportDiscountSchema extends SvrProcess {
 						continue;
 					}
 				} 
-					
-					MDiscountSchemaLine Line = new MDiscountSchemaLine(getCtx(), 0, get_TrxName());
+					int M_DiscountSchemaLine_ID = imp.getM_DiscountSchemaLine_ID()>0?imp.getM_DiscountSchemaLine_ID():0;
+					MDiscountSchemaLine Line = new MDiscountSchemaLine(getCtx(), M_DiscountSchemaLine_ID, get_TrxName());
 					String sqlLineNo = "SELECT MAX(SeqNo) From M_DiscountSchemaLine Where M_DiscountSchema_ID =" + M_DiscountSchema_ID;
 					int LineNo = 10;
 					int seqnobd = DB.getSQLValue(get_TrxName(), sqlLineNo);
