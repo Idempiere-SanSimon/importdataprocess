@@ -457,6 +457,40 @@ public class ImportPayment extends SvrProcess
 			if (no != 0)
 				log.warning ("No ConversionType=" + no);
 		//End Adonis
+			
+		//David Castillo
+//			Set Activity
+			sql = new StringBuilder ("UPDATE I_Payment i ")
+				.append("SET C_Activity_ID=(SELECT p.C_Activity_ID FROM C_Activity p")
+				.append(" WHERE p.Value=i.ActivityValue AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID) ")
+				.append("WHERE C_Activity_ID IS NULL AND ActivityValue IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set Activity from Value=" + no);
+			sql = new StringBuilder ("UPDATE I_Payment i ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Activity, '")
+				.append("WHERE C_Activity_ID IS NULL AND ActivityValue IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				log.warning ("Invalid Activity=" + no);
+			
+			// Set User1_ID David Castillo
+			sql = new StringBuilder ("UPDATE I_Payment i ")
+					.append("SET User1_ID=(SELECT p.C_ElementValue_ID FROM c_elementvalue p")
+					.append(" WHERE p.Value=i.User1Value AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID) ")
+					.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
+					.append(" AND I_IsImported<>'Y'").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (log.isLoggable(Level.FINE)) log.fine("Set User1 from Value=" + no);
+				sql = new StringBuilder ("UPDATE I_Payment i ")
+					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid User1, '")
+					.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
+					.append(" AND I_IsImported<>'Y'").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+					log.warning ("Invalid User1=" + no);
+				//End David Castillo
 		
 
 		commitEx();
@@ -563,8 +597,12 @@ public class ImportPayment extends SvrProcess
 				// Added by Adonis Castellanos 21/10/2020
 				if(imp.get_ValueAsInt("C_ConversionType_ID")>0)
 				payment.setC_ConversionType_ID(imp.get_ValueAsInt("C_ConversionType_ID"));
+			
 				// End Adonis
-				
+				//Added by David Castillo, 2021-02-23 
+				payment.setUser1_ID(imp.get_ValueAsInt("User1_ID"));
+				payment.set_ValueOfColumn("C_Activity_ID", imp.get_ValueAsInt("C_Activity_ID"));
+				//End David
 				//	Save payment
 				if (payment.save())
 				{
