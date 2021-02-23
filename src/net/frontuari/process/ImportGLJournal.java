@@ -494,6 +494,23 @@ public class ImportGLJournal extends SvrProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			log.warning ("Invalid Activity=" + no);
+		
+		// Set User1_ID David Castillo
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+				.append("SET User1_ID=(SELECT p.C_ElementValue_ID FROM c_elementvalue p")
+				.append(" WHERE p.Value=i.User1Value AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID) ")
+				.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
+				.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set User1 from Value=" + no);
+			sql = new StringBuilder ("UPDATE I_GLJournal i ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid User1, '")
+				.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
+				.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				log.warning ("Invalid User1=" + no);
+
 
 		//	Set SalesRegion
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
@@ -570,6 +587,8 @@ public class ImportGLJournal extends SvrProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			log.warning ("Zero Acct Balance=" + no);
+		
+		
 		//AZ Goodwill
 		//BF: 2391401 Remove account balance limitation in Import GL Journal 
 		/*
