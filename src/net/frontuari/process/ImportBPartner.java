@@ -23,7 +23,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.DBException;
@@ -33,7 +32,6 @@ import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MContactInterest;
 import org.compiere.model.MLocation;
-import org.compiere.model.MSequence;
 import org.compiere.model.MUser;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.X_I_BPartner;
@@ -614,40 +612,43 @@ implements ImportProcess
 				else 	//	New Contact
 					if (impBP.getContactName() != null || impBP.getEMail() != null)
 					{
-						user = new MUser (bp);
-						if (impBP.getC_Greeting_ID() != 0)
-							user.setC_Greeting_ID(impBP.getC_Greeting_ID());
-						String name = impBP.getContactName();
-						if (name == null || name.length() == 0)
-							name = impBP.getEMail();
-						user.setName(name);
-						user.setTitle(impBP.getTitle());
-						user.setDescription(impBP.getContactDescription());
-						user.setComments(impBP.getComments());
-						user.setPhone(impBP.getPhone());
-						user.setPhone2(impBP.getPhone2());
-						user.setFax(impBP.getFax());
-						user.setEMail(impBP.getEMail());
-						user.setBirthday(impBP.getBirthday());
-						if (bpl != null)
-							user.setC_BPartner_Location_ID(bpl.getC_BPartner_Location_ID());
-						ModelValidationEngine.get().fireImportValidate(this, impBP, user, ImportValidator.TIMING_AFTER_IMPORT);
-						if (user.save())
+						if(bp != null)
 						{
-							msglog = new StringBuilder("Insert BP Contact - ").append(user.getAD_User_ID());
-							if (log.isLoggable(Level.FINEST)) log.finest(msglog.toString());
-							impBP.setAD_User_ID(user.getAD_User_ID());
-						}
-						else
-						{
-							rollback();
-							noInsert--;
-							sql = new StringBuilder ("UPDATE I_BPartner i ")
-									.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||")
-							.append("'Cannot Insert BPContact, ' ")
-							.append("WHERE I_BPartner_ID=").append(impBP.getI_BPartner_ID());
-							DB.executeUpdateEx(sql.toString(), get_TrxName());
-							continue;
+							user = new MUser (bp);
+							if (impBP.getC_Greeting_ID() != 0)
+								user.setC_Greeting_ID(impBP.getC_Greeting_ID());
+							String name = impBP.getContactName();
+							if (name == null || name.length() == 0)
+								name = impBP.getEMail();
+							user.setName(name);
+							user.setTitle(impBP.getTitle());
+							user.setDescription(impBP.getContactDescription());
+							user.setComments(impBP.getComments());
+							user.setPhone(impBP.getPhone());
+							user.setPhone2(impBP.getPhone2());
+							user.setFax(impBP.getFax());
+							user.setEMail(impBP.getEMail());
+							user.setBirthday(impBP.getBirthday());
+							if (bpl != null)
+								user.setC_BPartner_Location_ID(bpl.getC_BPartner_Location_ID());
+							ModelValidationEngine.get().fireImportValidate(this, impBP, user, ImportValidator.TIMING_AFTER_IMPORT);
+							if (user.save())
+							{
+								msglog = new StringBuilder("Insert BP Contact - ").append(user.getAD_User_ID());
+								if (log.isLoggable(Level.FINEST)) log.finest(msglog.toString());
+								impBP.setAD_User_ID(user.getAD_User_ID());
+							}
+							else
+							{
+								rollback();
+								noInsert--;
+								sql = new StringBuilder ("UPDATE I_BPartner i ")
+										.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||")
+								.append("'Cannot Insert BPContact, ' ")
+								.append("WHERE I_BPartner_ID=").append(impBP.getI_BPartner_ID());
+								DB.executeUpdateEx(sql.toString(), get_TrxName());
+								continue;
+							}
 						}
 					}
 
@@ -743,6 +744,13 @@ implements ImportProcess
 		{
 			bp.set_ValueOfColumn("IsShareHolder", "Y");
 		}
+		//	Added by Jorge Colmenarez, 2021-02-20 14:35
+		//	Set Sales Representative
+		if(impBP.get_ValueAsBoolean("IsSalesRep"))
+		{
+			bp.setIsSalesRep(true);
+		}
+		//	End Jorge Colmenarez
 	}	// setTypeOfBPartner
 
 

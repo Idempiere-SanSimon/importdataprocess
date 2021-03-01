@@ -55,6 +55,8 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 	private Timestamp		m_DateValue = null;
 	/** Pricelist to Update				*/
 	private int 			p_M_PriceList_Version_ID = 0;
+	/**	Only validate, don't import		*/
+	private boolean			p_IsValidateOnly = false;
 
 	/**
 	 *  Prepare - e.g., get Parameters.
@@ -71,6 +73,8 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 				m_deleteOldImported = "Y".equals(para[i].getParameter());
 			else if (name.equals("M_PriceList_Version_ID"))
 				p_M_PriceList_Version_ID = para[i].getParameterAsInt();
+			else if (name.equals("IsValidateOnly"))
+				p_IsValidateOnly = para[i].getParameterAsBoolean();
 			else
 				log.log(Level.SEVERE, "Unknown Parameter: " + name);
 		}
@@ -405,8 +409,9 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 			log.warning("Invalid Tax Category=" + no);
 		//	End Jorge Colmenarez
 		
+		//	Commented by Jorge Colmenarez, remove code from not standard process
 		// Added by Adonis Castellanos 21/10/2020
-		sql = new StringBuilder ("UPDATE I_Product i ")
+		/*sql = new StringBuilder ("UPDATE I_Product i ")
 				.append("SET FTU_ProductClassifications_ID = ")
 				.append("(SELECT MAX(FTU_ProductClassifications_ID) FROM FTU_ProductClassifications pc WHERE pc.Value = i.ProductClassificationsValue AND pc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
 				.append("WHERE ProductClassificationsValue IS NOT NULL AND FTU_ProductClassifications_ID IS NULL")
@@ -455,7 +460,7 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (no != 0)
 				log.warning("Invalid Product Classifications3=" + no);
-			
+		*/	
 			// End Adonis
 		
 		
@@ -491,6 +496,10 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 		ModelValidationEngine.get().fireImportValidate(this, null, null, ImportValidator.TIMING_AFTER_VALIDATE);
 
 		commitEx();
+		if (p_IsValidateOnly)
+		{
+			return "Validated";
+		}
 		
 		//	-------------------------------------------------------------------
 		int noInsert = 0;
@@ -603,11 +612,18 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 						C_TaxCategory_ID = imp.get_ValueAsInt("C_TaxCategory_ID");
 					
 					product.setC_TaxCategory_ID(C_TaxCategory_ID);
-					//	Set Classification,Group 1 and Group 2
+					//	Set Classification,Group 1 and Group 2, IsStocked, IsBOM, IsPurchased, IsSold, IsManufactured
 					product.setClassification(imp.getClassification());
 					product.setGroup1(imp.get_ValueAsString("Group1"));
 					product.setGroup2(imp.get_ValueAsString("Group2"));
-					if(imp.get_Value("BIOTypePOS")!=null)
+					product.setIsStocked(imp.get_ValueAsBoolean("IsStocked"));
+					product.setIsBOM(imp.get_ValueAsBoolean("IsBOM"));
+					product.setIsPurchased(imp.get_ValueAsBoolean("IsPurchased"));
+					product.setIsSold(imp.get_ValueAsBoolean("IsSold"));
+					product.setIsManufactured(imp.get_ValueAsBoolean("IsManufactured"));
+					/*	Jorge Colmenarez, 2021-02-20 15:18
+					 * Remove code from standard process
+					 * if(imp.get_Value("BIOTypePOS")!=null)
 						product.set_ValueOfColumn("BIOTypePOS", imp.get_Value("BIOTypePOS"));
 					if(imp.get_ValueAsInt("FTU_ProductClassifications_ID")>0)
 						product.set_ValueOfColumn("FTU_ProductClassifications_ID", imp.get_ValueAsInt("FTU_ProductClassifications_ID"));
@@ -615,7 +631,7 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 						product.set_ValueOfColumn("FTU_ProductClassifications2_ID", imp.get_ValueAsInt("FTU_ProductClassifications2_ID"));
 					if(imp.get_ValueAsInt("FTU_ProductClassifications3_ID")>0)
 						product.set_ValueOfColumn("FTU_ProductClassifications3_ID", imp.get_ValueAsInt("FTU_ProductClassifications3_ID"));
-					
+					*/
 					
 					ModelValidationEngine.get().fireImportValidate(this, imp, product, ImportValidator.TIMING_AFTER_IMPORT);
 					if (product.save())
@@ -639,13 +655,19 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 						.append("SET (Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
-						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID,Group1,Group2,BIOTypePOS"
-								+ ",FTU_ProductClassifications_ID,FTU_ProductClassifications2_ID,FTU_ProductClassifications3_ID)= ")
+						//	Remove code from standard process
+						/*.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID,Group1,Group2,BIOTypePOS"
+								+ ",FTU_ProductClassifications_ID,FTU_ProductClassifications2_ID,FTU_ProductClassifications3_ID)= ")*/
+						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID,Group1,Group2,IsStocked"
+								+ ",IsBOM,IsPurchased,IsSold,IsManufactured)= ")
 						.append("(SELECT Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
-						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID,Group1,Group2,BIOTypePOS"
-								+ ",FTU_ProductClassifications_ID,FTU_ProductClassifications2_ID,FTU_ProductClassifications3_ID")
+						//	Remove code from standard process
+						/*.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID,Group1,Group2,BIOTypePOS"
+								+ ",FTU_ProductClassifications_ID,FTU_ProductClassifications2_ID,FTU_ProductClassifications3_ID")*/
+						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID,Group1,Group2,IsStocked"
+								+ ",IsBOM,IsPurchased,IsSold,IsManufactured")
 						.append(" FROM I_Product WHERE I_Product_ID=").append(I_Product_ID).append(") ")
 						.append("WHERE M_Product_ID=").append(M_Product_ID);
 					PreparedStatement pstmt_updateProduct = DB.prepareStatement
