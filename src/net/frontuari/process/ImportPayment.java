@@ -490,6 +490,24 @@ public class ImportPayment extends SvrProcess
 				no = DB.executeUpdate(sql.toString(), get_TrxName());
 				if (no != 0)
 					log.warning ("Invalid User1=" + no);
+				
+				sql = new StringBuilder ("UPDATE I_Payment i ")
+						.append("SET AD_Org_ID=COALESCE((SELECT o.AD_Org_ID FROM AD_Org o")
+						.append(" WHERE o.Value=i.OrgValue AND o.IsSummary='N' AND i.AD_Client_ID=o.AD_Client_ID),AD_Org_ID) ")
+						.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0) AND OrgValue IS NOT NULL").append (clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					if (log.isLoggable(Level.FINE)) log.fine("Set Org from Value=" + no);
+					sql = new StringBuilder ("UPDATE I_Payment i ")
+						.append("SET AD_Org_ID=AD_OrgDoc_ID ")
+						.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0) AND (OrgValue IS NULL OR OrgValue='') AND AD_OrgDoc_ID IS NOT NULL AND AD_OrgDoc_ID<>0").append (clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
+					if (log.isLoggable(Level.FINE)) log.fine("Set Org from Doc Org=" + no);
+					//	Error Org
+					sql = new StringBuilder ("UPDATE I_Payment o ")
+						.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org, '")
+						.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0")
+						.append(" OR EXISTS (SELECT * FROM AD_Org oo WHERE o.AD_Org_ID=oo.AD_Org_ID AND (oo.IsSummary='Y' OR oo.IsActive='N')))").append (clientCheck);
+					no = DB.executeUpdate(sql.toString(), get_TrxName());
 				//End David Castillo
 		
 
@@ -600,8 +618,10 @@ public class ImportPayment extends SvrProcess
 			
 				// End Adonis
 				//Added by David Castillo, 2021-02-23 
-				payment.setUser1_ID(imp.get_ValueAsInt("User1_ID"));
-				payment.set_ValueOfColumn("C_Activity_ID", imp.get_ValueAsInt("C_Activity_ID"));
+				if (imp.get_Value("User1_ID") != null) {
+				payment.setUser1_ID(imp.get_ValueAsInt("User1_ID"));}
+				if (imp.get_Value("C_Activity_ID") != null) {
+				payment.set_ValueOfColumn("C_Activity_ID", imp.get_ValueAsInt("C_Activity_ID"));}
 				//End David
 				//	Save payment
 				if (payment.save())
