@@ -99,16 +99,28 @@ public class ImportOrder extends SvrProcess
 		//	Delete Old Imported
 		if (m_deleteOldImported)
 		{
-			sql = new StringBuilder ("DELETE I_Order ")
+			sql = new StringBuilder ("DELETE FROM I_Order ")
 				  .append("WHERE I_IsImported='Y'").append (clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Delete Old Impored =" + no);
 		}
-
+			
+		//added by david castillo 11/03/2021 support to org from importer
+				sql = new StringBuilder ("UPDATE I_Order o ")	//	org
+						  .append("SET AD_OrgTrx_ID=(SELECT AD_Org_ID FROM AD_Org d WHERE d.Value=o.OrgValue")
+						  .append(" AND o.AD_Client_ID=d.AD_Client_ID) ")
+						  .append("WHERE AD_OrgTrx_ID IS NULL AND OrgValue IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				
+				sql = new StringBuilder ("UPDATE I_Order o ")	//	org
+						  .append("SET AD_Org_ID = o.AD_OrgTrx_ID")
+						  .append(" WHERE AD_OrgTrx_ID IS NOT NULL AND OrgValue IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				
 		//	Set Client, Org, IsActive, Created/Updated
 		sql = new StringBuilder ("UPDATE I_Order ")
 			  .append("SET AD_Client_ID = COALESCE (AD_Client_ID,").append (m_AD_Client_ID).append ("),")
-			  .append(" AD_Org_ID = COALESCE (AD_Org_ID,").append (m_AD_Org_ID).append ("),")
+			//  .append(" AD_Org_ID = COALESCE (AD_OrgTrx_ID,").append (m_AD_Org_ID).append ("),")
 			  .append(" IsActive = COALESCE (IsActive, 'Y'),")
 			  .append(" Created = COALESCE (Created, SysDate),")
 			  .append(" CreatedBy = COALESCE (CreatedBy, 0),")
@@ -120,11 +132,13 @@ public class ImportOrder extends SvrProcess
 			  .append("WHERE I_IsImported<>'Y' OR I_IsImported IS NULL");
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.INFO)) log.info ("Reset=" + no);
-
+		
+		
+		
 		sql = new StringBuilder ("UPDATE I_Order o ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org, '")
-			.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0")
-			.append(" OR EXISTS (SELECT * FROM AD_Org oo WHERE o.AD_Org_ID=oo.AD_Org_ID AND (oo.IsSummary='Y' OR oo.IsActive='N')))")
+			.append("WHERE (AD_OrgTrx_ID IS NULL OR AD_OrgTrx_ID=0")
+			.append(" OR EXISTS (SELECT * FROM AD_Org oo WHERE o.AD_OrgTrx_ID=oo.AD_Org_ID AND (oo.IsSummary='Y' OR oo.IsActive='N')))")
 			.append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
@@ -197,8 +211,37 @@ public class ImportOrder extends SvrProcess
 			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set IsSOTrx=N=" + no);
+		//Added by David Castillo 10/03/2021 support to CurrencyIsoCode
+//		Set Currency
+			sql = new StringBuilder ("UPDATE I_Order i ")
+				.append("SET C_Currency_ID=(SELECT C_Currency_ID FROM C_Currency c")
+				.append(" WHERE i.ISO_Code=c.ISO_Code AND c.AD_Client_ID IN (0,i.AD_Client_ID)) ")
+				.append("WHERE C_Currency_ID IS NULL AND ISO_Code IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				if (log.isLoggable(Level.INFO)) log.info("Set Currency=" + no);
+			//
+			sql = new StringBuilder ("UPDATE I_Order ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Currency,' ")
+				.append("WHERE C_Currency_ID IS NULL ")
+				.append("AND I_IsImported<>'E' ")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				log.warning("No Currency=" + no);
+			
+		
 
 		//	Price List
+		//Added by david castillo 11/03/2021 support to pricelistname
+		sql = new StringBuilder ("UPDATE I_Order o ")
+					  .append("SET M_PriceList_ID=(SELECT MAX(M_PriceList_ID) FROM M_PriceList p WHERE p.IsDefault='Y'")
+					  .append("AND p.IsSOPriceList=o.IsSOTrx AND o.PriceListName = p.Name AND o.AD_Client_ID=p.AD_Client_ID) ")
+					  .append("WHERE M_PriceList_ID IS NULL AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			
+			//end david 	
 		sql = new StringBuilder ("UPDATE I_Order o ")
 			  .append("SET M_PriceList_ID=(SELECT MAX(M_PriceList_ID) FROM M_PriceList p WHERE p.IsDefault='Y'")
 			  .append(" AND p.C_Currency_ID=o.C_Currency_ID AND p.IsSOPriceList=o.IsSOTrx AND o.AD_Client_ID=p.AD_Client_ID) ")
@@ -270,6 +313,14 @@ public class ImportOrder extends SvrProcess
 			log.warning ("No PaymentTerm=" + no);
 
 		//	Warehouse
+		//Added by David Castillo 10/03/2021 support to warehouse's value
+		sql = new StringBuilder ("UPDATE I_Order o ")
+				  .append("SET M_Warehouse_ID=(SELECT M_Warehouse_ID FROM M_Warehouse w")
+				  .append(" WHERE o.WarehouseValue=w.value AND o.AD_Org_ID=w.AD_Org_ID) ")
+				  .append("WHERE M_Warehouse_ID IS NULL AND WarehouseValue IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());	//	Warehouse for Org
+		// end david castillo
+
 		sql = new StringBuilder ("UPDATE I_Order o ")
 			  .append("SET M_Warehouse_ID=(SELECT MAX(M_Warehouse_ID) FROM M_Warehouse w")
 			  .append(" WHERE o.AD_Client_ID=w.AD_Client_ID AND o.AD_Org_ID=w.AD_Org_ID) ")
@@ -480,6 +531,13 @@ public class ImportOrder extends SvrProcess
 			log.warning ("Invalid Product and Charge exclusive=" + no);
 
 		//	Tax
+		//Added by David Castillo 10/03/2021 support to tax's name
+		sql = new StringBuilder ("UPDATE I_Order o ")
+				  .append("SET C_Tax_ID=(SELECT C_Tax_ID FROM C_Tax t")
+				  .append(" WHERE o.TaxName = t.Name AND o.AD_Client_ID=t.AD_Client_ID) ")
+				  .append("WHERE C_Tax_ID IS NULL AND TaxName IS NOT NULL")
+				  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		
 		sql = new StringBuilder ("UPDATE I_Order o ")
 			  .append("SET C_Tax_ID=(SELECT MAX(C_Tax_ID) FROM C_Tax t")
 			  .append(" WHERE o.TaxIndicator=t.TaxIndicator AND o.AD_Client_ID=t.AD_Client_ID) ")
@@ -504,15 +562,22 @@ public class ImportOrder extends SvrProcess
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Set UoM=" + no);
 			// Set proper error message
+			sql = new StringBuilder ("UPDATE I_ORDER i ")
+					.append("SET C_UOM_ID = (SELECT C_UOM_ID FROM C_UOM u WHERE u.X12DE355=i.X12DE355 AND u.AD_Client_ID IN (0,i.AD_Client_ID))")
+					.append("WHERE C_UOM_ID IS NULL AND X12DE355 IS NOT NULL")
+					.append(" AND I_IsImported<>'Y'").append(clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (log.isLoggable(Level.INFO)) log.info("Set UOM=" + no);
+				//
 			sql = new StringBuilder ("UPDATE I_Order ")
 				  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found UOM, ' ")
-				  .append("WHERE C_UoM_ID IS NULL AND UoMName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+				  .append("WHERE C_UoM_ID IS NULL AND (UoMName IS NOT NULL OR X12DE355 IS NOT NULL) AND I_IsImported<>'Y'").append (clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (no != 0)
 				log.warning("No UoM=" + no);
 			
 			//activity
-			sql = new StringBuilder ("UPDATE I_Order o ")
+		/*	sql = new StringBuilder ("UPDATE I_Order o ")
 					  .append("SET C_Activity_ID=(SELECT C_Activity_ID FROM C_Activity c")
 					  .append(" WHERE o.ActivityName=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
 					  .append("WHERE C_Activity_ID IS NULL AND ActivityName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
@@ -555,7 +620,7 @@ public class ImportOrder extends SvrProcess
 							.append(" AND I_IsImported<>'Y' ").append (clientCheck);
 					no = DB.executeUpdate(sql.toString(), get_TrxName());
 					if (no != 0)
-						log.warning ("Invalid ConversionTypeValue=" + no);
+						log.warning ("Invalid ConversionTypeValue=" + no);*/
 		commitEx();
 		
 		//	-- New BPartner ---------------------------------------------------
@@ -752,7 +817,7 @@ public class ImportOrder extends SvrProcess
 						oldDocumentNo = "";
 					//
 					order = new MOrder (getCtx(), 0, get_TrxName());
-					order.setClientOrg (imp.getAD_Client_ID(), imp.getAD_Org_ID());
+					order.setClientOrg (imp.getAD_Client_ID(), imp.getAD_OrgTrx_ID());
 					order.setC_DocTypeTarget_ID(imp.getC_DocType_ID());
 					order.setIsSOTrx(imp.isSOTrx());
 					if (imp.getDeliveryRule() != null ) {
@@ -782,8 +847,8 @@ public class ImportOrder extends SvrProcess
 					if (order.getSalesRep_ID() == 0)
 						order.setSalesRep_ID(getAD_User_ID());
 					//
-					if (imp.getAD_OrgTrx_ID() != 0)
-						order.setAD_OrgTrx_ID(imp.getAD_OrgTrx_ID());
+				/*	if (imp.getAD_OrgTrx_ID() != 0)
+						order.setAD_OrgTrx_ID(imp.getAD_OrgTrx_ID());*/
 					if (imp.getC_Activity_ID() != 0)
 						order.setC_Activity_ID(imp.getC_Activity_ID());
 					if (imp.getC_Campaign_ID() != 0)
