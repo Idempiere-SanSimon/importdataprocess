@@ -40,8 +40,6 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
 
-import com.coposa.model.MCOP_BPartnerTypeRelation;
-
 /**
  *	Import BPartners from I_BPartner
  *
@@ -288,22 +286,6 @@ implements ImportProcess
 		
 		//	Added by Jorge Colmenarez, 2020-03-19 14:55 
 		//	Support for LCO Fields
-		//	Set Business Partner Type
-		sql = new StringBuilder ("UPDATE I_BPartner i ")
-				.append("SET COP_BPartnerType_ID=(SELECT COP_BPartnerType_ID FROM COP_BPartnerType bpt")
-				.append(" WHERE i.BPartnerTypeValue=bpt.Value AND bpt.AD_Client_ID IN (0, i.AD_Client_ID)) ")
-				.append("WHERE COP_BPartnerType_ID IS NULL AND BPartnerTypeValue IS NOT NULL")
-				.append(" AND I_IsImported<>'Y'").append(clientCheck);
-		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
-		if (log.isLoggable(Level.FINE)) log.fine("Set Business Partner Type=" + no);
-		//
-		sql = new StringBuilder ("UPDATE I_BPartner i ")
-				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Business Partner Type, ' ")
-				.append("WHERE COP_BPartnerType_ID IS NULL AND BPartnerTypeValue IS NOT NULL")
-				.append(" AND I_IsImported<>'Y'").append(clientCheck);
-		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
-		if (log.isLoggable(Level.CONFIG)) log.config("Invalid Business Partner Type=" + no);
-
 		//	Set Tax Payer Type
 		sql = new StringBuilder ("UPDATE I_BPartner i ")
 				.append("SET LCO_TaxPayerType_ID=(SELECT LCO_TaxPayerType_ID FROM LCO_TaxPayerType tpt")
@@ -336,8 +318,6 @@ implements ImportProcess
 		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.CONFIG)) log.config("Invalid ISIC/CIIU=" + no);
 		//	End Jorge Colmenarez
-		
-		
 		
 		ModelValidationEngine.get().fireImportValidate(this, null, null, ImportValidator.TIMING_AFTER_VALIDATE);
 
@@ -448,11 +428,7 @@ implements ImportProcess
 						
 						//
 						if (bp.save())
-						{
-							if(impBP.get_ValueAsInt("COP_BPartnerType_ID") != 0) {
-								
-							}
-							
+						{	
 							msglog = new StringBuilder("Update BPartner - ").append(bp.getC_BPartner_ID());
 							if (log.isLoggable(Level.FINEST)) log.finest(msglog.toString());
 							noUpdate++;
@@ -661,19 +637,6 @@ implements ImportProcess
 					ci.saveEx();		//	don't subscribe or re-activate
 				}
 				
-				//	BPartner Type
-				// changes for Carlos Vargas add the model class MCOP_BPartnerTypeRelation
-				if(impBP.get_ValueAsInt("COP_BPartnerType_ID") > 0)
-				{
-					MCOP_BPartnerTypeRelation bptr = new MCOP_BPartnerTypeRelation(getCtx(), 0, get_TrxName());
-					bptr.set_ValueOfColumn("AD_Client_ID", bp.getAD_Client_ID());
-					bptr.setAD_Org_ID(bp.getAD_Org_ID());
-					bptr.setC_BPartner_ID(bp.getC_BPartner_ID());
-					bptr.setCOP_BPartnerType_ID(impBP.get_ValueAsInt("COP_BPartnerType_ID"));
-					bptr.setIsActive(true);
-					bptr.saveEx();
-					
-				}
 				//
 				impBP.setI_IsImported(true);
 				impBP.setProcessed(true);
