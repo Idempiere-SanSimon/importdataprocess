@@ -52,7 +52,7 @@ import org.compiere.util.DB;
  * 			<li>FR [ 2788278 ] Data Import Validator - migrate core processes
  * 				https://sourceforge.net/tracker/?func=detail&aid=2788278&group_id=176962&atid=879335
  * 	@author Jorge Colmenarez, Frontuari, C.A. http://frontuari.net
- * 			Support for LVE Fields Required
+ * 			Support for LVE Fields Required, Add Support for Fields for Customer BPartners
  */
 public class ImportBPartner extends SvrProcess
 implements ImportProcess
@@ -317,6 +317,53 @@ implements ImportProcess
 				.append(" AND I_IsImported<>'Y'").append(clientCheck);
 		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.CONFIG)) log.config("Invalid ISIC/CIIU=" + no);
+		//	Added By Jorge Colmenarez, 2021-03-18 18:28
+		//	Support for Customers Rules
+		//	Tax Id Type
+		sql = new StringBuilder ("UPDATE I_BPartner i ")
+				.append("SET LCO_TaxIdType_ID=(SELECT LCO_TaxIdType_ID FROM LCO_TaxIdType tit")
+				.append(" WHERE i.TaxIdTypeName=tit.Name AND tit.AD_Client_ID IN (0, i.AD_Client_ID)) ")
+				.append("WHERE LCO_TaxIdType_ID IS NULL AND TaxIdTypeName IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set Tax Identifier Type=" + no);
+		//
+		sql = new StringBuilder ("UPDATE I_BPartner i ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Tax Identifier Type, ' ")
+				.append("WHERE LCO_TaxIdType_ID IS NULL AND TaxIdTypeName IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.CONFIG)) log.config("Invalid Tax Identifier Type=" + no);
+		//	Payment Term
+		sql = new StringBuilder ("UPDATE I_BPartner i ")
+				.append("SET C_PaymentTerm_ID=(SELECT C_PaymentTerm_ID FROM C_PaymentTerm pt")
+				.append(" WHERE i.PaymentTerm=pt.Name AND pt.AD_Client_ID IN (0, i.AD_Client_ID)) ")
+				.append("WHERE C_PaymentTerm_ID IS NULL AND PaymentTerm IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set Payment Type=" + no);
+		//
+		sql = new StringBuilder ("UPDATE I_BPartner i ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Payment Type, ' ")
+				.append("WHERE C_PaymentTerm_ID IS NULL AND PaymentTerm IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.CONFIG)) log.config("Invalid Payment Type=" + no);
+		//	Price List
+		sql = new StringBuilder ("UPDATE I_BPartner i ")
+				.append("SET M_PriceList_ID=(SELECT M_PriceList_ID FROM M_PriceList pl")
+				.append(" WHERE i.PriceListName=pl.Name AND pl.AD_Client_ID IN (0, i.AD_Client_ID)) ")
+				.append("WHERE M_PriceList_ID IS NULL AND PriceListName IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set Price List=" + no);
+		//
+		sql = new StringBuilder ("UPDATE I_BPartner i ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Price List, ' ")
+				.append("WHERE M_PriceList_ID IS NULL AND PriceListName IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.CONFIG)) log.config("Invalid Price List=" + no);		
 		//	End Jorge Colmenarez
 		
 		ModelValidationEngine.get().fireImportValidate(this, null, null, ImportValidator.TIMING_AFTER_VALIDATE);
@@ -375,6 +422,24 @@ implements ImportProcess
 						if(impBP.get_ValueAsInt("LCO_ISIC_ID") > 0)
 							bp.set_ValueOfColumn("LCO_ISIC_ID", impBP.get_ValueAsInt("LCO_ISIC_ID"));
 						// End LCO Fields
+						//	Added By Jorge Colmenarez, 2021-03-18 18:42
+						//	Support for Customer Fields
+						if(impBP.get_ValueAsInt("LCO_TaxIdType_ID") > 0)
+							bp.set_ValueOfColumn("LCO_TaxIdType_ID", impBP.get_ValueAsInt("LCO_TaxIdType_ID"));
+						if(impBP.get_ValueAsString("DeliveryViaRule") != "")
+							bp.setDeliveryViaRule(impBP.get_ValueAsString("DeliveryViaRule"));
+						if(impBP.get_ValueAsString("DeliveryRule") != "")
+							bp.setDeliveryRule(impBP.get_ValueAsString("DeliveryRule"));
+						if(impBP.get_ValueAsString("InvoiceRule") != "")
+							bp.setInvoiceRule(impBP.get_ValueAsString("InvoiceRule"));
+						if(impBP.get_ValueAsString("PaymentRule") != "")
+							bp.setPaymentRule(impBP.get_ValueAsString("PaymentRule"));
+						if(impBP.get_ValueAsInt("C_PaymentTerm_ID") > 0)
+							bp.setC_PaymentTerm_ID(impBP.get_ValueAsInt("C_PaymentTerm_ID"));
+						if(impBP.get_ValueAsInt("M_PriceList_ID") > 0)
+							bp.setM_PriceList_ID(impBP.get_ValueAsInt("M_PriceList_ID"));
+						// 	End Customer Fields
+						//	End Jorge Colmenarez
 						ModelValidationEngine.get().fireImportValidate(this, impBP, bp, ImportValidator.TIMING_AFTER_IMPORT);
 						
 						setTypeOfBPartner(impBP,bp);
@@ -422,6 +487,24 @@ implements ImportProcess
 						if(impBP.get_ValueAsInt("LCO_ISIC_ID") > 0)
 							bp.set_ValueOfColumn("LCO_ISIC_ID", impBP.get_ValueAsInt("LCO_ISIC_ID"));
 						// End LCO Fields
+						//	Added By Jorge Colmenarez, 2021-03-18 18:42
+						//	Support for Customer Fields
+						if(impBP.get_ValueAsInt("LCO_TaxIdType_ID") > 0)
+							bp.set_ValueOfColumn("LCO_TaxIdType_ID", impBP.get_ValueAsInt("LCO_TaxIdType_ID"));
+						if(impBP.get_ValueAsString("DeliveryViaRule") != "")
+							bp.setDeliveryViaRule(impBP.get_ValueAsString("DeliveryViaRule"));
+						if(impBP.get_ValueAsString("DeliveryRule") != "")
+							bp.setDeliveryRule(impBP.get_ValueAsString("DeliveryRule"));
+						if(impBP.get_ValueAsString("InvoiceRule") != "")
+							bp.setInvoiceRule(impBP.get_ValueAsString("InvoiceRule"));
+						if(impBP.get_ValueAsString("PaymentRule") != "")
+							bp.setPaymentRule(impBP.get_ValueAsString("PaymentRule"));
+						if(impBP.get_ValueAsInt("C_PaymentTerm_ID") > 0)
+							bp.setC_PaymentTerm_ID(impBP.get_ValueAsInt("C_PaymentTerm_ID"));
+						if(impBP.get_ValueAsInt("M_PriceList_ID") > 0)
+							bp.setM_PriceList_ID(impBP.get_ValueAsInt("M_PriceList_ID"));
+						// 	End Customer Fields
+						//	End Jorge Colmenarez
 						ModelValidationEngine.get().fireImportValidate(this, impBP, bp, ImportValidator.TIMING_AFTER_IMPORT);
 						
 						setTypeOfBPartner(impBP,bp);
