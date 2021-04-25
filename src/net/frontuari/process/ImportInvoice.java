@@ -50,7 +50,7 @@ public class ImportInvoice extends SvrProcess
 	/**	Delete old Imported				*/
 	private boolean			m_deleteOldImported = false;
 	/**	Document Action					*/
-	private String			m_docAction = MInvoice.DOCACTION_Prepare;
+	private String			m_docAction =  "" ;//MInvoice.DOCACTION_Prepare;
 
 
 	/** Effective						*/
@@ -71,10 +71,17 @@ public class ImportInvoice extends SvrProcess
 				m_AD_Org_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else if (name.equals("DeleteOldImported"))
 				m_deleteOldImported = "Y".equals(para[i].getParameter());
-			else if (name.equals("DocAction"))
-				m_docAction = (String)para[i].getParameter();
+			else if (name.equals("DocAction")) {
+				String action = (String)para[i].getParameter();
+			System.out.println((String)para[i].getParameter());
+			if (action != null) {
+				m_docAction = action;
+			}}
+				
 			else
 				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+			
+			
 		}
 		if (m_DateValue == null)
 			m_DateValue = new Timestamp (System.currentTimeMillis());
@@ -129,7 +136,6 @@ public class ImportInvoice extends SvrProcess
 		sql = new StringBuilder ("UPDATE I_Invoice o ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org, '")
 			.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0")
-			//.append(" OR EXISTS (SELECT * FROM AD_Org oo WHERE o.AD_Org_ID=oo.AD_Org_ID AND (oo.IsSummary='Y' OR oo.IsActive='N'))")
 			.append(") AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
@@ -523,7 +529,7 @@ public class ImportInvoice extends SvrProcess
 		// Set Conversion Type
 				sql = new StringBuilder ("UPDATE I_Invoice o ")
 						.append("SET C_ConversionType_ID=(SELECT C_ConversionType_ID FROM C_ConversionType a")
-						.append(" WHERE o.ConversionTypeValue=a.Value AND a.AD_Client_ID = o.AD_Client_ID) ")
+						.append(" WHERE o.ConversionTypeValue=a.Value AND (a.AD_Client_ID = o.AD_Client_ID OR a.AD_Client_ID = 0)) ")
 						.append(" WHERE C_ConversionType_ID IS NULL and ConversionTypeValue IS NOT NULL")
 						.append(" AND I_IsImported<>'Y'").append (clientCheck);
 				no = DB.executeUpdate(sql.toString(), get_TrxName());
@@ -726,11 +732,12 @@ public class ImportInvoice extends SvrProcess
 					|| !oldDocumentNo.equals(cmpDocumentNo)	)
 				{
 					if (invoice != null)
-					{
+					{//dont process if m_docAction is empty
+						if (!m_docAction.equals("")) {
 						if (!invoice.processIt(m_docAction)) {
 							log.warning("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
 							throw new IllegalStateException("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
-							
+						}	
 						}
 						invoice.saveEx();
 					}
@@ -745,6 +752,9 @@ public class ImportInvoice extends SvrProcess
 					invoice.setClientOrg (imp.getAD_Client_ID(), imp.getAD_Org_ID());
 					invoice.setC_DocTypeTarget_ID(imp.getC_DocType_ID());
 					invoice.setIsSOTrx(imp.isSOTrx());
+					//added by david castillo 21/04/2021 invoice can be imported prepared
+					invoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
+					//end david castillo
 					if (imp.getDocumentNo() != null)
 					{
 						invoice.setDocumentNo(imp.getDocumentNo());
@@ -845,10 +855,13 @@ public class ImportInvoice extends SvrProcess
 			}
 			if (invoice != null)
 			{
+				// Dont process if m_docAction Is Empty
+				if (!m_docAction.equals("")) {
 				if(!invoice.processIt (m_docAction)) {
 					log.warning("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
 					throw new IllegalStateException("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
 					
+				}
 				}
 				invoice.saveEx();
 			}
