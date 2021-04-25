@@ -89,6 +89,8 @@ public class ImportInventory extends SvrProcess implements ImportProcess
 	private MInventory 		costingDoc = null;
 	
 	private int 			p_C_DocType_ID = 0;
+	/** Conversion Type for Update Costing */
+	private int 			p_C_ConversionType_ID = 0;
 	/**
 	 *  Prepare - e.g., get Parameters.
 	 */
@@ -124,6 +126,8 @@ public class ImportInventory extends SvrProcess implements ImportProcess
 				m_docAction = (String)para[i].getParameter();
 			else if (name.equals("C_DocType_ID"))
 				p_C_DocType_ID = ((BigDecimal)para[i].getParameter()).intValue();
+			else if (name.equals("C_ConversionType_ID"))
+				p_C_ConversionType_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else
 				log.log(Level.WARNING, "Unknown Parameter: " + name);
 		}
@@ -435,6 +439,8 @@ public class ImportInventory extends SvrProcess implements ImportProcess
 				MProduct product = new MProduct(getCtx(), imp.getM_Product_ID(), get_TrxName());
 				//	Line
 				int M_AttributeSetInstance_ID = generateASI(product,imp);
+				if(M_AttributeSetInstance_ID == 0)
+					System.out.println(product.getName()+" "+imp.getWarehouseValue());
 
 				MInventoryLine line = new MInventoryLine (inventory, 
 					imp.getM_Locator_ID(), imp.getM_Product_ID(), M_AttributeSetInstance_ID,
@@ -571,7 +577,12 @@ public class ImportInventory extends SvrProcess implements ImportProcess
 			cost.saveEx();
 		if (costingDoc == null) {
 			costingDoc = new MInventory(getCtx(), 0, get_TrxName());
+			costingDoc.setMovementDate(p_MovementDate);
 			costingDoc.setC_DocType_ID(p_C_DocType_ID);
+			//	Added By Jorge Colmenarez, 2021-04-15 19:35
+			costingDoc.setC_Currency_ID(acctSchema.getC_Currency_ID());
+			costingDoc.setC_ConversionType_ID(p_C_ConversionType_ID);
+			//	End Jorge Colmenarez
 			costingDoc.setCostingMethod(cost.getM_CostElement().getCostingMethod());
 			costingDoc.setAD_Org_ID(imp.getAD_Org_ID());
 			costingDoc.setDocAction(DocAction.ACTION_Complete);
