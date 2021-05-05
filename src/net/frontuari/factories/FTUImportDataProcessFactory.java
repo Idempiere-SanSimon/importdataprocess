@@ -8,6 +8,7 @@ import net.frontuari.process.ImportBPartner;
 import net.frontuari.process.ImportDiscountSchema;
 import net.frontuari.process.ImportEmployee;
 import net.frontuari.process.ImportGLJournal;
+import net.frontuari.process.ImportInOut;
 import net.frontuari.process.ImportInventory;
 import net.frontuari.process.ImportInvoice;
 import net.frontuari.process.ImportOrder;
@@ -51,6 +52,9 @@ public class FTUImportDataProcessFactory implements IProcessFactory {
 
 		if(className.equals("net.frontuari.process.ImportEmployee"))
 			return new ImportEmployee();
+		
+		if(className.equals("net.frontuari.process.ImportInOut"))
+			return new ImportInOut();
 		
 		return null;
 	}
