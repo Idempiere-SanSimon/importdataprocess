@@ -404,6 +404,8 @@ public class ImportInventory extends SvrProcess implements ImportProcess
 						if (m_docAction != null && m_docAction.length() > 0) {
 							if (!inventory.processIt(m_docAction)) {
 								log.warning("Inventory Process Failed: " + inventory + " - " + inventory.getProcessMsg());
+								DB.close(rs, pstmt);
+								rs = null; pstmt = null;
 								throw new IllegalStateException("Inventory Process Failed: " + inventory + " - " + inventory.getProcessMsg());
 
 							}
@@ -439,8 +441,6 @@ public class ImportInventory extends SvrProcess implements ImportProcess
 				MProduct product = new MProduct(getCtx(), imp.getM_Product_ID(), get_TrxName());
 				//	Line
 				int M_AttributeSetInstance_ID = generateASI(product,imp);
-				if(M_AttributeSetInstance_ID == 0)
-					System.out.println(product.getName()+" "+imp.getWarehouseValue());
 
 				MInventoryLine line = new MInventoryLine (inventory, 
 					imp.getM_Locator_ID(), imp.getM_Product_ID(), M_AttributeSetInstance_ID,

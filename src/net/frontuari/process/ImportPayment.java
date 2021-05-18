@@ -27,7 +27,6 @@ import org.compiere.model.MPayment;
 import org.compiere.model.X_I_Payment;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
-import org.compiere.util.AdempiereUserError;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
@@ -50,6 +49,8 @@ public class ImportPayment extends SvrProcess
 	private boolean			p_deleteOldImported = false;
 	/**	Document Action					*/
 	private String			m_docAction = null;
+	/**	Only validate, don't import		*/
+	private boolean			p_IsValidateOnly = false;
 
 	/** Properties						*/
 	private Properties 		m_ctx;
@@ -71,6 +72,8 @@ public class ImportPayment extends SvrProcess
 				p_deleteOldImported = "Y".equals(para[i].getParameter());
 			else if (name.equals("DocAction"))
 				m_docAction = (String)para[i].getParameter();
+			else if (name.equals("IsValidateOnly"))
+				p_IsValidateOnly = para[i].getParameterAsBoolean();
 			else
 				log.log(Level.SEVERE, "Unknown Parameter: " + name);
 		}
@@ -132,53 +135,6 @@ public class ImportPayment extends SvrProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			log.warning ("Invalid Org=" + no);
-			
-		//	Set Bank Account
-		/*sql = new StringBuilder("UPDATE I_Payment i ")
-			.append("SET C_BankAccount_ID=")
-			.append("( ")
-			.append(" SELECT C_BankAccount_ID ")
-			.append(" FROM C_BankAccount a, C_Bank b ")
-			.append(" WHERE b.IsOwnBank='Y' ")
-			.append(" AND a.AD_Client_ID=i.AD_Client_ID ")
-			.append(" AND a.C_Bank_ID=b.C_Bank_ID ")
-			.append(" AND a.AccountNo=i.BankAccountNo ")
-			//.append(" AND b.RoutingNo=i.RoutingNo ")
-			//.append(" OR b.SwiftCode=i.RoutingNo ")
-			.append(") ")
-			.append("WHERE i.C_BankAccount_ID IS NULL ")
-			.append("AND (i.I_IsImported<>'Y' ")
-			.append("OR i.I_IsImported IS NULL)").append(clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (no != 0)
-			if (log.isLoggable(Level.INFO)) log.info("Bank Account (With Routing No)=" + no);*/
-		//
-		/*sql = new StringBuilder("UPDATE I_Payment i ") 
-		 	.append("SET C_BankAccount_ID=")
-			.append("( ")
-			.append(" SELECT C_BankAccount_ID ")
-			.append(" FROM C_BankAccount a, C_Bank b ")
-			.append(" WHERE b.IsOwnBank='Y' ")
-			.append(" AND a.C_Bank_ID=b.C_Bank_ID ") 
-			.append(" AND a.AccountNo=i.BankAccountNo ")
-			.append(" AND a.AD_Client_ID=i.AD_Client_ID ")
-			.append(") ")
-			.append("WHERE i.C_BankAccount_ID IS NULL ")
-			.append("AND i.I_isImported<>'Y' ").append(clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (no != 0)
-			if (log.isLoggable(Level.INFO)) log.info("Bank Account (Without Routing No)=" + no);*/
-		//
-		/*sql = new StringBuilder("UPDATE I_Payment i ")
-			.append("SET C_BankAccount_ID=(SELECT C_BankAccount_ID FROM C_BankAccount a WHERE a.C_BankAccount_ID=").append(p_C_BankAccount_ID);
-		sql.append(" and a.AD_Client_ID=i.AD_Client_ID) ")
-			.append("WHERE i.C_BankAccount_ID IS NULL ")
-			.append("AND i.BankAccountNo IS NULL ")
-			.append("AND (i.I_isImported<>'Y' ")
-			.append("OR i.I_isImported IS NULL)").append(clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (no != 0)
-			if (log.isLoggable(Level.INFO)) log.info("Bank Account=" + no);*/
 		
 		sql = new StringBuilder()
 				.append("update I_Payment i set C_BankAccount_ID = (Select MAX(ba.C_BankAccount_ID) From C_BankAccount ba WHERE ba.AccountNo = i.AccountNo) WHERE i.C_BankAccount_ID IS NULL AND"
@@ -459,60 +415,61 @@ public class ImportPayment extends SvrProcess
 		//End Adonis
 			
 		//David Castillo
-//			Set Activity
-			sql = new StringBuilder ("UPDATE I_Payment i ")
-				.append("SET C_Activity_ID=(SELECT p.C_Activity_ID FROM C_Activity p")
-				.append(" WHERE p.Value=i.ActivityValue AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID) ")
-				.append("WHERE C_Activity_ID IS NULL AND ActivityValue IS NOT NULL")
-				.append(" AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Set Activity from Value=" + no);
-			sql = new StringBuilder ("UPDATE I_Payment i ")
-				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Activity, '")
-				.append("WHERE C_Activity_ID IS NULL AND ActivityValue IS NOT NULL")
-				.append(" AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				log.warning ("Invalid Activity=" + no);
-			
-			// Set User1_ID David Castillo
-			sql = new StringBuilder ("UPDATE I_Payment i ")
-					.append("SET User1_ID=(SELECT p.C_ElementValue_ID FROM c_elementvalue p")
-					.append(" WHERE p.Value=i.User1Value AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID) ")
-					.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
-					.append(" AND I_IsImported<>'Y'").append (clientCheck);
-				no = DB.executeUpdate(sql.toString(), get_TrxName());
-				if (log.isLoggable(Level.FINE)) log.fine("Set User1 from Value=" + no);
-				sql = new StringBuilder ("UPDATE I_Payment i ")
-					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid User1, '")
-					.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
-					.append(" AND I_IsImported<>'Y'").append (clientCheck);
-				no = DB.executeUpdate(sql.toString(), get_TrxName());
-				if (no != 0)
-					log.warning ("Invalid User1=" + no);
-				//ORG
-				/*
-				sql = new StringBuilder ("UPDATE I_Payment i ")
-						.append("SET AD_Org_ID=COALESCE((SELECT o.AD_Org_ID FROM AD_Org o")
-						.append(" WHERE o.Value=i.OrgValue AND o.IsSummary='N' AND i.AD_Client_ID=o.AD_Client_ID),AD_Org_ID) ")
-						.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0) AND OrgValue IS NOT NULL").append (clientCheck);
-					no = DB.executeUpdate(sql.toString(), get_TrxName());
-					if (log.isLoggable(Level.FINE)) log.fine("Set Org from Value=" + no);
-					sql = new StringBuilder ("UPDATE I_Payment i ")
-						.append("SET AD_Org_ID=AD_OrgDoc_ID ")
-						.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0) AND (OrgValue IS NULL OR OrgValue='') AND AD_OrgDoc_ID IS NOT NULL AND AD_OrgDoc_ID<>0").append (clientCheck);
-					no = DB.executeUpdate(sql.toString(), get_TrxName());
-					if (log.isLoggable(Level.FINE)) log.fine("Set Org from Doc Org=" + no);
-					//	Error Org
-					sql = new StringBuilder ("UPDATE I_Payment o ")
-						.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org, '")
-						.append("WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0")
-						.append(" OR EXISTS (SELECT * FROM AD_Org oo WHERE o.AD_Org_ID=oo.AD_Org_ID AND (oo.IsSummary='Y' OR oo.IsActive='N')))").append (clientCheck);
-					no = DB.executeUpdate(sql.toString(), get_TrxName());*/
-				//End David Castillo
+		//	Set Activity
+		sql = new StringBuilder ("UPDATE I_Payment i ")
+			.append("SET C_Activity_ID=(SELECT p.C_Activity_ID FROM C_Activity p")
+			.append(" WHERE p.Value=i.ActivityValue AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID) ")
+			.append("WHERE C_Activity_ID IS NULL AND ActivityValue IS NOT NULL")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set Activity from Value=" + no);
+		sql = new StringBuilder ("UPDATE I_Payment i ")
+			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Activity, '")
+			.append("WHERE C_Activity_ID IS NULL AND ActivityValue IS NOT NULL")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning ("Invalid Activity=" + no);
 		
+		// Set User1_ID David Castillo
+		sql = new StringBuilder ("UPDATE I_Payment i ")
+			.append("SET User1_ID=(SELECT p.C_ElementValue_ID FROM c_elementvalue p")
+			.append(" WHERE p.Value=i.User1Value AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID) ")
+			.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set User1 from Value=" + no);
+		sql = new StringBuilder ("UPDATE I_Payment i ")
+			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid User1, '")
+			.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning ("Invalid User1=" + no);
+		
+		//	Added by Jorge Colmenarez, 2021-05-17 11:19
+		//	Set OrgTrx 
+		sql = new StringBuilder ("UPDATE I_Payment i ")
+			.append("SET AD_OrgTrx_ID=(SELECT o.AD_Org_ID FROM AD_Org o ")
+			.append(" WHERE o.Value=i.OrgValue AND o.IsSummary='N' AND i.AD_Client_ID=o.AD_Client_ID) ")
+			.append("WHERE AD_OrgTrx_ID IS NULL AND OrgValue IS NOT NULL")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set OrgTrx from OrgValue=" + no);
+		sql = new StringBuilder ("UPDATE I_Payment i ")
+			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid OrgTrx, '")
+			.append("WHERE AD_OrgTrx_ID IS NULL AND OrgValue IS NOT NULL")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning ("Invalid OrgTrx=" + no);
+		//	End Jorge Colmenarez
 
 		commitEx();
+		if (p_IsValidateOnly)
+		{
+			return "@Validated@";
+		}
 		
 		//Import Bank Statement
 		sql = new StringBuilder("SELECT * FROM I_Payment")
@@ -620,10 +577,14 @@ public class ImportPayment extends SvrProcess
 				// End Adonis
 				//Added by David Castillo, 2021-02-23 
 				if (imp.get_Value("User1_ID") != null) {
-				payment.setUser1_ID(imp.get_ValueAsInt("User1_ID"));}
+					payment.setUser1_ID(imp.get_ValueAsInt("User1_ID"));}
 				if (imp.get_Value("C_Activity_ID") != null) {
-				payment.set_ValueOfColumn("C_Activity_ID", imp.get_ValueAsInt("C_Activity_ID"));}
+					payment.set_ValueOfColumn("C_Activity_ID", imp.get_ValueAsInt("C_Activity_ID"));}
 				//End David
+				//	Added by Jorge Colmenarez, 2021-05-17 15:20
+				if(imp.get_ValueAsInt("AD_OrgTrx_ID") > 0)
+					payment.setAD_OrgTrx_ID(imp.get_ValueAsInt("AD_OrgTrx_ID"));
+				//	End Jorge Colmenarez
 				//	Save payment
 				if (payment.save())
 				{
@@ -638,6 +599,9 @@ public class ImportPayment extends SvrProcess
 						payment.setDocAction(m_docAction);
 						if(!payment.processIt (m_docAction)) {
 							log.warning("Payment Process Failed: " + payment + " - " + payment.getProcessMsg());
+							DB.close(rs, pstmt);
+							rs = null;
+							pstmt = null;
 							throw new IllegalStateException("Payment Process Failed: " + payment + " - " + payment.getProcessMsg());
 							
 						}
