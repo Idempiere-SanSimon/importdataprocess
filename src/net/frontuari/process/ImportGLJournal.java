@@ -488,13 +488,13 @@ public class ImportGLJournal extends SvrProcess
 			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set Activity from Value=" + no);
-		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+	/*	sql = new StringBuilder ("UPDATE I_GLJournal i ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Activity, '")
 			.append("WHERE C_Activity_ID IS NULL AND ActivityValue IS NOT NULL")
 			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
-			log.warning ("Invalid Activity=" + no);
+			log.warning ("Invalid Activity=" + no);*/
 		
 		// Set User1_ID David Castillo
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
@@ -504,13 +504,13 @@ public class ImportGLJournal extends SvrProcess
 				.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Set User1 from Value=" + no);
-			sql = new StringBuilder ("UPDATE I_GLJournal i ")
+		/*	sql = new StringBuilder ("UPDATE I_GLJournal i ")
 				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid User1, '")
 				.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
 				.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (no != 0)
-				log.warning ("Invalid User1=" + no);
+				log.warning ("Invalid User1=" + no);*/
 
 
 		//	Set SalesRegion
@@ -846,7 +846,9 @@ public class ImportGLJournal extends SvrProcess
 				line.setAmtAcctDr(imp.getAmtAcctDr());
 				line.setCurrencyRate(imp.getCurrencyRate());
 				line.setDateAcct (imp.getDateAcct());
+				if(imp.get_ValueAsInt("C_Activity_ID") > 0)
 				line.setC_Activity_ID(imp.get_ValueAsInt("C_Activity_ID"));//new fields
+				if(imp.get_ValueAsInt("User1_ID") > 0)
 				line.setUser1_ID(imp.get_ValueAsInt("User1_ID"));//new fields
 				//
 				line.setC_UOM_ID(imp.getC_UOM_ID());

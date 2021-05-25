@@ -15,6 +15,7 @@ import net.frontuari.process.ImportOrder;
 import net.frontuari.process.ImportPayment;
 import net.frontuari.process.ImportPriceList;
 import net.frontuari.process.ImportProduct;
+import net.frontuari.process.ImportProductBOM;
 
 public class FTUImportDataProcessFactory implements IProcessFactory {
 
@@ -55,6 +56,9 @@ public class FTUImportDataProcessFactory implements IProcessFactory {
 		
 		if(className.equals("net.frontuari.process.ImportInOut"))
 			return new ImportInOut();
+		
+		if(className.contentEquals("net.frontuari.process.ImportProductBOM"))
+			return new ImportProductBOM();
 		
 		return null;
 	}
