@@ -24,6 +24,7 @@ import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.ImportValidator;
 import org.adempiere.process.ImportProcess;
 import org.compiere.model.MProduct;
@@ -356,22 +357,6 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 		if (no != 0)
 			log.warning("Not Unique UPC=" + no);
 
-		//	Mandatory Value
-		/*sql = new StringBuilder ("UPDATE I_Product i ")
-			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Mandatory Value,' ")
-			.append("WHERE Value IS NULL")
-			.append(" AND I_IsImported<>'Y'").append(clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (no != 0)
-			log.warning("No Mandatory Value=" + no);*/
-
-		//	Vendor Product No
-	//	sql = new StringBuffer ("UPDATE I_Product i "
-	//		+ "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Mandatory VendorProductNo,' "
-	//		+ "WHERE I_IsImported<>'Y'"
-	//		+ " AND VendorProductNo IS NULL AND (C_BPartner_ID IS NOT NULL OR BPartner_Value IS NOT NULL)").append(clientCheck);
-	//	no = DB.executeUpdate(sql.toString(), get_TrxName());
-	//	log.info(log.l3_Util, "No Mandatory VendorProductNo=" + no);
 		sql = new StringBuilder ("UPDATE I_Product ")
 			.append("SET VendorProductNo=Value ")
 			.append("WHERE C_BPartner_ID IS NOT NULL AND VendorProductNo IS NULL")
@@ -409,7 +394,6 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 			log.warning("Invalid Tax Category=" + no);
 		//	End Jorge Colmenarez
 		
-		//	Commented by Jorge Colmenarez, remove code from not standard process
 		//added by david castillo set ftu_productGroup_id
 		sql = new StringBuilder ("UPDATE I_Product i ")
 				.append("SET FTU_ProductGroup_ID = ")
@@ -427,71 +411,10 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 			if (no != 0)
 				log.warning("Invalid Product Group=" + no);
 			
-			
-		/*sql = new StringBuilder ("UPDATE I_Product i ")
-				.append("SET FTU_ProductClassifications2_ID = ")
-				.append("(SELECT MAX(FTU_ProductClassifications_ID) FROM FTU_ProductClassifications pc WHERE pc.Value = i.ProductClassifications2Value AND pc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
-				.append("WHERE ProductClassifications2Value IS NOT NULL AND FTU_ProductClassifications2_ID IS NULL")
-				.append(" AND I_IsImported<>'Y'").append(clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Set Product Classifications2=" + no);
-				//
-		sql = new StringBuilder ("UPDATE I_Product ")
-				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Product Classifications2, ' ")
-				.append("WHERE FTU_ProductClassifications2_ID IS NULL AND ProductClassifications2Value IS NOT NULL")
-				.append(" AND I_IsImported<>'Y'").append(clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				log.warning("Invalid Product Classifications2=" + no);
-				
-				
-		sql = new StringBuilder ("UPDATE I_Product i ")
-				.append("SET FTU_ProductClassifications3_ID = ")
-				.append("(SELECT MAX(FTU_ProductClassifications_ID) FROM FTU_ProductClassifications pc WHERE pc.Value = i.ProductClassifications3Value AND pc.AD_Client_ID IN (0,i.AD_Client_ID)) ")
-				.append("WHERE ProductClassifications3Value IS NOT NULL AND FTU_ProductClassifications3_ID IS NULL")
-				.append(" AND I_IsImported<>'Y'").append(clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Set Product Classifications3=" + no);
-					//
-		sql = new StringBuilder ("UPDATE I_Product ")
-				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Product Classifications3, ' ")
-				.append("WHERE FTU_ProductClassifications3_ID IS NULL AND ProductClassifications3Value IS NOT NULL")
-				.append(" AND I_IsImported<>'Y'").append(clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				log.warning("Invalid Product Classifications3=" + no);
-		*/	
-			// End Adonis
-		
-		
-		
-		//	Added by Carlos Vargas  
 		//	Get Default Tax Category
 		int C_TaxCategory_ID = 0;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		/*try
-		{
-			StringBuilder dbpst = new StringBuilder("SELECT C_TaxCategory_ID FROM C_TaxCategory WHERE IsDefault='Y'").append(clientCheck);
-			pstmt = DB.prepareStatement(dbpst.toString(), get_TrxName());
-			rs = pstmt.executeQuery();
-			if (rs.next())
-				C_TaxCategory_ID = rs.getInt(1);
-		}
-		catch (SQLException e)
-		{
-			throw new Exception ("TaxCategory", e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-		if (log.isLoggable(Level.FINE)) log.fine("C_TaxCategory_ID=" + C_TaxCategory_ID);*/
-		//	End Carlos Vargas
-		
-		
 
 		ModelValidationEngine.get().fireImportValidate(this, null, null, ImportValidator.TIMING_AFTER_VALIDATE);
 
@@ -515,56 +438,6 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 		PreparedStatement pstmt_insertProductPO = null;
 		try
 		{
-			/*	Insert Product from Import
-			PreparedStatement pstmt_insertProduct = conn.prepareStatement
-				("INSERT INTO M_Product (M_Product_ID,"
-				+ "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,"
-				+ "Value,Name,Description,DocumentNote,Help,"
-				+ "UPC,SKU,C_UOM_ID,IsSummary,M_Product_Category_ID,C_TaxCategory_ID,"
-				+ "ProductType,ImageURL,DescriptionURL) "
-				+ "SELECT ?,"
-				+ "AD_Client_ID,AD_Org_ID,'Y',SysDate,CreatedBy,SysDate,UpdatedBy,"
-				+ "Value,Name,Description,DocumentNote,Help,"
-				+ "UPC,SKU,C_UOM_ID,'N',M_Product_Category_ID," + C_TaxCategory_ID + ","
-				+ "ProductType,ImageURL,DescriptionURL "
-				+ "FROM I_Product "
-				+ "WHERE I_Product_ID=?");
-			*/
-			//	Update Product from Import
-			//jz moved
-			/*
-			String sqlt = "UPDATE M_PRODUCT "
-				+ "SET (Value,Name,Description,DocumentNote,Help,"
-				+ "UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,"
-				+ "Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,"
-				+ "Discontinued,DiscontinuedBy,Updated,UpdatedBy)= "
-				+ "(SELECT Value,Name,Description,DocumentNote,Help,"
-				+ "UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,"
-				+ "Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,"
-				+ "Discontinued,DiscontinuedBy,SysDate,UpdatedBy"
-				+ " FROM I_Product WHERE I_Product_ID=?) "
-				+ "WHERE M_Product_ID=?";
-			PreparedStatement pstmt_updateProduct = DB.prepareStatement
-				(sqlt, get_TrxName());
-
-			//	Update Product_PO from Import
-			sqlt = "UPDATE M_Product_PO "
-				+ "SET (IsCurrentVendor,C_UOM_ID,C_Currency_ID,UPC,"
-				+ "PriceList,PricePO,RoyaltyAmt,PriceEffective,"
-				+ "VendorProductNo,VendorCategory,Manufacturer,"
-				+ "Discontinued,DiscontinuedBy,Order_Min,Order_Pack,"
-				+ "CostPerOrder,DeliveryTime_Promised,Updated,UpdatedBy)= "
-				+ "(SELECT 'Y',C_UOM_ID,C_Currency_ID,UPC,"
-				+ "PriceList,PricePO,RoyaltyAmt,PriceEffective,"
-				+ "VendorProductNo,VendorCategory,Manufacturer,"
-				+ "Discontinued,DiscontinuedBy,Order_Min,Order_Pack,"
-				+ "CostPerOrder,DeliveryTime_Promised,SysDate,UpdatedBy"
-				+ " FROM I_Product"
-				+ " WHERE I_Product_ID=?) "
-				+ "WHERE M_Product_ID=? AND C_BPartner_ID=?";
-			PreparedStatement pstmt_updateProductPO = DB.prepareStatement
-				(sqlt, get_TrxName());
-*/
 			//	Insert Product from Import
 			pstmt_insertProductPO = DB.prepareStatement
 				("INSERT INTO M_Product_PO (M_Product_ID,C_BPartner_ID, "
@@ -621,17 +494,8 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 					product.setIsPurchased(imp.get_ValueAsBoolean("IsPurchased"));
 					product.setIsSold(imp.get_ValueAsBoolean("IsSold"));
 					product.setIsManufactured(imp.get_ValueAsBoolean("IsManufactured"));
-					/*	Jorge Colmenarez, 2021-02-20 15:18
-					 * Remove code from standard process
-					 * if(imp.get_Value("BIOTypePOS")!=null)
-						product.set_ValueOfColumn("BIOTypePOS", imp.get_Value("BIOTypePOS"));
-						*/
 					if(imp.get_ValueAsInt("FTU_ProductGroup_ID")>0)
-						product.set_ValueOfColumn("FTU_ProductGroup_ID", imp.get_ValueAsInt("FTU_ProductClassifications_ID"));
-					/*if(imp.get_ValueAsInt("FTU_ProductClassifications2_ID")>0)
-						product.set_ValueOfColumn("FTU_ProductClassifications2_ID", imp.get_ValueAsInt("FTU_ProductClassifications2_ID"));
-					if(imp.get_ValueAsInt("FTU_ProductClassifications3_ID")>0)
-						product.set_ValueOfColumn("FTU_ProductClassifications3_ID", imp.get_ValueAsInt("FTU_ProductClassifications3_ID"));*/
+						product.set_ValueOfColumn("FTU_ProductGroup_ID", imp.get_ValueAsInt("FTU_ProductGroup_ID"));
 					
 					
 					ModelValidationEngine.get().fireImportValidate(this, imp, product, ImportValidator.TIMING_AFTER_IMPORT);
@@ -656,17 +520,11 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 						.append("SET (Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
-						//	Remove code from standard process
-						/*.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID,Group1,Group2,BIOTypePOS"
-								+ ",FTU_ProductClassifications_ID,FTU_ProductClassifications2_ID,FTU_ProductClassifications3_ID)= ")*/
 						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID,Group1,Group2,IsStocked"
 								+ ",IsBOM,IsPurchased,IsSold,IsManufactured)= ")
 						.append("(SELECT Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
-						//	Remove code from standard process
-						/*.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID,Group1,Group2,BIOTypePOS"
-								+ ",FTU_ProductClassifications_ID,FTU_ProductClassifications2_ID,FTU_ProductClassifications3_ID")*/
 						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID,Group1,Group2,IsStocked"
 								+ ",IsBOM,IsPurchased,IsSold,IsManufactured")
 						.append(" FROM I_Product WHERE I_Product_ID=").append(I_Product_ID).append(") ")
@@ -674,8 +532,6 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 					PreparedStatement pstmt_updateProduct = DB.prepareStatement
 						(sqlt.toString(), get_TrxName());
 
-					//jz pstmt_updateProduct.setInt(1, I_Product_ID);
-					//   pstmt_updateProduct.setInt(2, M_Product_ID);
 					try
 					{
 						no = pstmt_updateProduct.executeUpdate();
@@ -721,9 +577,6 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 							.append("WHERE M_Product_ID=").append(M_Product_ID).append(" AND C_BPartner_ID=").append(C_BPartner_ID);
 						PreparedStatement pstmt_updateProductPO = DB.prepareStatement
 							(sqlt.toString(), get_TrxName());
-						//jz pstmt_updateProductPO.setInt(1, I_Product_ID);
-						// pstmt_updateProductPO.setInt(2, M_Product_ID);
-						// pstmt_updateProductPO.setInt(3, C_BPartner_ID);
 						try
 						{
 							no = pstmt_updateProductPO.executeUpdate();
@@ -801,6 +654,7 @@ public class ImportProduct extends SvrProcess implements ImportProcess
 		}
 		catch (SQLException e)
 		{
+			throw new AdempiereException(e.getLocalizedMessage());
 		}
 		finally
 		{
