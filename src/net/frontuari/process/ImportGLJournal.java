@@ -847,9 +847,9 @@ public class ImportGLJournal extends SvrProcess
 				line.setCurrencyRate(imp.getCurrencyRate());
 				line.setDateAcct (imp.getDateAcct());
 				if(imp.get_ValueAsInt("C_Activity_ID") > 0)
-				line.setC_Activity_ID(imp.get_ValueAsInt("C_Activity_ID"));//new fields
+					line.setC_Activity_ID(imp.get_ValueAsInt("C_Activity_ID"));//new fields
 				if(imp.get_ValueAsInt("User1_ID") > 0)
-				line.setUser1_ID(imp.get_ValueAsInt("User1_ID"));//new fields
+					line.setUser1_ID(imp.get_ValueAsInt("User1_ID"));//new fields
 				//
 				line.setC_UOM_ID(imp.getC_UOM_ID());
 				line.setQty(imp.getQty());
