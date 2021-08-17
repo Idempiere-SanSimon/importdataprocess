@@ -74,7 +74,6 @@ public class ImportInvoice extends FTUProcess
 				m_deleteOldImported = "Y".equals(para[i].getParameter());
 			else if (name.equals("DocAction")) {
 				String action = (String)para[i].getParameter();
-			System.out.println((String)para[i].getParameter());
 			if (action != null) {
 				m_docAction = action;
 			}}
