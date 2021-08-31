@@ -223,9 +223,10 @@ public class ImportProductBOM extends FTUProcess {
 		
 		if (importBOM.getHelp() != null)
 		bom.setHelp(importBOM.getHelp());
-		
-		bom.set_ValueOfColumn("ProductionQty", bom.get_Value("ProductionQty"));
-		
+		//	Modified by Jorge Colmenarez, 2021-08-30 15:55
+		//	Fixed bug when set ProductionQty
+		bom.set_ValueOfColumn("ProductionQty", importBOM.get_Value("ProductionQty"));
+		//	End Jorge Colmenarez
 		bom.setC_UOM_ID(importBOM.getM_Product().getC_UOM_ID());
 		bom.saveEx();
 
