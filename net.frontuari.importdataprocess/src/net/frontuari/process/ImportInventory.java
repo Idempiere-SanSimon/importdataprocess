@@ -227,7 +227,7 @@ public class ImportInventory extends FTUProcess implements ImportProcess
 		//	Locator
 		sql = new StringBuilder ("UPDATE I_Inventory i ")
 			.append("SET M_Locator_ID=(SELECT MAX(M_Locator_ID) FROM M_Locator l")
-			.append(" WHERE i.LocatorValue=l.Value AND i.AD_Client_ID=l.AD_Client_ID) ")
+			.append(" WHERE i.LocatorValue=l.Value AND i.AD_Client_ID=l.AD_Client_ID AND i.AD_Org_ID = l.AD_Org_ID) ")
 			.append("WHERE M_Locator_ID IS NULL AND LocatorValue IS NOT NULL")
 			.append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate (sql.toString (), get_TrxName());
