@@ -23,6 +23,7 @@ import net.frontuari.process.ImportBPBankAccount;
 import net.frontuari.process.ImportBPartner;
 import net.frontuari.process.ImportDiscountSchema;
 import net.frontuari.process.ImportEmployee;
+import net.frontuari.process.ImportForecast;
 import net.frontuari.process.ImportGLJournal;
 import net.frontuari.process.ImportInOut;
 import net.frontuari.process.ImportInventory;
@@ -64,6 +65,7 @@ public class ProcessFactory extends FTUProcessFactory {
 		registerProcess(ImportProduct.class);
 		registerProcess(ImportProductBOM.class);
 		registerProcess(ImportRequisition.class);
+		registerProcess(ImportForecast.class);
 	}
 
 }
