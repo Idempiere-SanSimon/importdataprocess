@@ -1,4 +1,3 @@
- 
 /*****************************************************************************
  * Product: Adempiere ERP & CRM Smart Business Solution                       *
  * Copyright (C) 2003-2010 e-Evolution. All Rights Reserved.                  *
