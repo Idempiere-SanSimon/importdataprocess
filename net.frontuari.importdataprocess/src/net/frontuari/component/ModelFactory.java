@@ -21,6 +21,7 @@ package net.frontuari.component;
 import net.frontuari.base.FTUModelFactory;
 import net.frontuari.model.X_I_DiscountSchema;
 import net.frontuari.model.X_I_Employee;
+import net.frontuari.model.X_I_Forecast;
 import net.frontuari.model.X_I_InOut;
 import net.frontuari.model.X_I_Product_BOM;
 import net.frontuari.model.X_I_Requisition;
@@ -46,6 +47,7 @@ public class ModelFactory extends FTUModelFactory {
 		registerModel(X_I_InOut.Table_Name, X_I_InOut.class);
 		registerModel(X_I_Product_BOM.Table_Name, X_I_Product_BOM.class);
 		registerModel(X_I_Requisition.Table_Name, X_I_Requisition.class);
+		registerModel(X_I_Forecast.Table_Name, X_I_Forecast.class);
 	}
 
 }

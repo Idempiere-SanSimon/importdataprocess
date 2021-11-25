@@ -711,4 +711,36 @@ public class X_I_Forecast extends PO implements I_I_Forecast, I_Persistent
 	{
 		return (String)get_Value(COLUMNNAME_WarehouseValue);
 	}
+
+	@Override
+	public void setC_SalesRegion_ID(int C_SalesRegion_ID) {
+		if (C_SalesRegion_ID < 1) 
+			set_ValueNoCheck (COLUMNNAME_C_SalesRegion_ID, null);
+		else 
+			set_ValueNoCheck (COLUMNNAME_C_SalesRegion_ID, Integer.valueOf(C_SalesRegion_ID));
+	}
+
+	@Override
+	public int getC_SalesRegion_ID() {
+		Integer ii = (Integer)get_Value(COLUMNNAME_C_SalesRegion_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	@Override
+	public I_C_SalesRegion getC_SalesRegion() throws RuntimeException {
+		return (org.compiere.model.I_C_SalesRegion)MTable.get(getCtx(), org.compiere.model.I_C_SalesRegion.Table_Name)
+				.getPO(getC_SalesRegion_ID(), get_TrxName());	
+	}
+
+	@Override
+	public void setSalesRegionValue(String SalesRegionValue) {
+		set_Value (COLUMNNAME_SalesRegionValue, SalesRegionValue);
+	}
+
+	@Override
+	public String getSalesRegionValue() {
+		return (String)get_Value(COLUMNNAME_SalesRegionValue);
+	}
 }

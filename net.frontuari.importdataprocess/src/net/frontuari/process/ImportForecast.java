@@ -7,13 +7,12 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.DBException;
-import org.compiere.model.MForecast;
-import org.compiere.model.MForecastLine;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 
 import net.frontuari.base.FTUProcess;
-import net.frontuari.model.X_I_Employee;
+import net.frontuari.model.MFTUForecast;
+import net.frontuari.model.MFTUForecastLine;
 import net.frontuari.model.X_I_Forecast;
 
 public class ImportForecast extends FTUProcess{
@@ -27,7 +26,6 @@ public class ImportForecast extends FTUProcess{
 
 	@Override
 	protected void prepare() {
-		// TODO Auto-generated method stub
 		ProcessInfoParameter[] para = getParameter();
 		for (int i = 0; i < para.length; i++)
 		{
@@ -46,7 +44,6 @@ public class ImportForecast extends FTUProcess{
 
 	@Override
 	protected String doIt() throws Exception {
-		// TODO Auto-generated method stub
 		StringBuilder sql = null;
 		int no = 0;
 		String clientCheck = getWhereClause();
@@ -82,9 +79,9 @@ public class ImportForecast extends FTUProcess{
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Set Org=" + no);
 			//
-			sql = new StringBuilder ("UPDATE I_Forecast i")
-					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid BPartner, ' ")
-					.append("WHERE AD_OrgTrx_ID IS NULL")
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid BPartner, ' ")
+					.append("WHERE OrgValue IS NOT NULL AND AD_OrgTrx_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.CONFIG)) log.config("Invalid Org=" + no);
@@ -99,9 +96,9 @@ public class ImportForecast extends FTUProcess{
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Set BPartner=" + no);
 			//
-			sql = new StringBuilder ("UPDATE I_Forecast i")
-					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid BPartner, ' ")
-					.append("WHERE C_BPartner_ID IS NULL")
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid BPartner, ' ")
+					.append("WHERE BPartnerValue IS NOT NULL AND C_BPartner_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.CONFIG)) log.config("Invalid BPartner=" + no);
@@ -117,7 +114,7 @@ public class ImportForecast extends FTUProcess{
 			if (log.isLoggable(Level.FINE)) log.fine("Set Warehouse=" + no);
 			//
 			/*sql = new StringBuilder ("UPDATE I_Forecast i")
-					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Warehouse, ' ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Warehouse, ' ")
 					.append("WHERE M_Warehouse_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
@@ -134,8 +131,8 @@ public class ImportForecast extends FTUProcess{
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Set Product=" + no);
 			//
-			sql = new StringBuilder ("UPDATE I_Forecast i")
-					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Product, ' ")
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Product, ' ")
 					.append("WHERE M_Product_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
@@ -143,53 +140,69 @@ public class ImportForecast extends FTUProcess{
 			
 			//Period
 			sql = new StringBuilder ("UPDATE I_Forecast i ")
-					.append("SET C_Period_ID=(SELECT MAX(p.C_Period_ID) FROM C_Period_ID p ")
+					.append("SET C_Period_ID=(SELECT MAX(p.C_Period_ID) FROM C_Period p ")
 					.append("WHERE i.PeriodDate BETWEEN p.StartDate and p.EndDate ")
-					.append(" AND p.AD_Client_ID=i.AD_Client_ID AND p.AD_Org_ID = i.AD_OrgTrx_ID) ");
+					.append(" AND p.AD_Client_ID=i.AD_Client_ID AND (p.AD_Org_ID = i.AD_OrgTrx_ID OR p.AD_Org_ID = 0)) ");
 			sql.append("WHERE PeriodDate IS NOT NULL AND C_Period_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Set Period=" + no);
 			//
-			sql = new StringBuilder ("UPDATE I_Forecast i")
-					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Period, ' ")
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Period, ' ")
 					.append("WHERE C_Period_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.CONFIG)) log.config("Invalid Period=" + no);
 			
 			//SalesRep
-
-			//Period
 			sql = new StringBuilder ("UPDATE I_Forecast i ")
 					.append("SET SalesRep_ID=(SELECT u.AD_User_ID FROM AD_User u ")
 					.append("WHERE u.Name = i.SalesRep_Name ")
-					.append(" AND p.AD_Client_ID=i.AD_Client_ID) ");
+					.append(" AND u.AD_Client_ID=i.AD_Client_ID) ");
 			sql.append("WHERE SalesRep_Name IS NOT NULL AND SalesRep_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Set SalesRep_ID=" + no);
 			//
-			sql = new StringBuilder ("UPDATE I_Forecast i")
-					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Period, ' ")
-					.append("WHERE SalesRep_ID IS NULL")
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid SalesRep, ' ")
+					.append("WHERE SalesRep_Name IS NOT NULL AND SalesRep_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.CONFIG)) log.config("Invalid SalesRep_Name=" + no);
 			
+			//	Added by Jorge Colmenarez, 2021-11-24 16:58
+			//	Set SalesRegion
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET C_SalesRegion_ID=(SELECT MAX(sr.C_SalesRegion_ID) FROM C_SalesRegion sr ")
+					.append("WHERE sr.Value=i.SalesRegionValue")
+					.append(" AND sr.AD_Client_ID=i.AD_Client_ID) ");
+			sql.append("WHERE SalesRegionValue IS NOT NULL AND C_SalesRegion_ID IS NULL")
+					.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set SalesRegion=" + no);
+			//
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid SalesRegion, ' ")
+					.append("WHERE SalesRegionValue IS NOT NULL AND C_SalesRegion_ID IS NULL")
+					.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.CONFIG)) log.config("Invalid SalesRegion=" + no);
+			//	End Jorge Colmenarez
 			//Year
 			sql = new StringBuilder ("UPDATE I_Forecast i ")
-					.append("SET C_Year_ID=(SELECT MAX(p.C_Year_ID) FROM C_Year_ID p ")
-					.append("WHERE p.C_Period_id = i.C_Period_ID")
+					.append("SET C_Year_ID=(SELECT MAX(p.C_Year_ID) FROM C_Period p ")
+					.append("WHERE p.C_Period_ID = i.C_Period_ID")
 					.append(" AND p.AD_Client_ID = i.AD_Client_ID) ");
-			sql.append("WHERE C_Period_id IS NOT NULL AND C_Year_ID IS NULL")
+			sql.append("WHERE C_Period_ID IS NOT NULL AND C_Year_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Set Year=" + no);
 			
 			
-			sql = new StringBuilder ("UPDATE I_Forecast i")
-					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Year, ' ")
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Year, ' ")
 					.append("WHERE C_Year_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
@@ -197,7 +210,7 @@ public class ImportForecast extends FTUProcess{
 			
 			//Calendar
 			sql = new StringBuilder ("UPDATE I_Forecast i ")
-					.append("SET C_Calendar_ID = (SELECT MAX(p.C_Calendar_ID) FROM C_Calendar_ID c ")
+					.append("SET C_Calendar_ID = (SELECT MAX(c.C_Calendar_ID) FROM C_Year c ")
 					.append("WHERE c.C_Year_ID = i.C_Year_ID")
 					.append(" AND c.AD_Client_ID = i.AD_Client_ID) ");
 			sql.append("WHERE C_Year_ID IS NOT NULL AND C_Calendar_ID IS NULL")
@@ -206,8 +219,8 @@ public class ImportForecast extends FTUProcess{
 			if (log.isLoggable(Level.FINE)) log.fine("Set Calendar=" + no);
 			
 			
-			sql = new StringBuilder ("UPDATE I_Forecast i")
-					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Calendar, ' ")
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Calendar, ' ")
 					.append("WHERE C_Year_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
@@ -227,7 +240,7 @@ public class ImportForecast extends FTUProcess{
 			//	Go through Records
 			sql = new StringBuilder ("SELECT * FROM I_Forecast ")
 					.append("WHERE I_IsImported='N'").append(clientCheck);
-			sql.append(" ORDER BY C_Year_ID)");
+			sql.append(" ORDER BY C_Year_ID,C_Period_ID ");
 			PreparedStatement pstmt =  null;
 			ResultSet rs = null;
 			try
@@ -238,13 +251,13 @@ public class ImportForecast extends FTUProcess{
 				{
 					X_I_Forecast IForecast = new X_I_Forecast(getCtx(), rs, get_TrxName());
 					
-					String sqlForecast = "Select M_Forecast_ID from M_Forecast where C_Calendar_ID = ? and C_Year_ID = ?  and ForecastType = ?";
+					String sqlForecast = "Select M_Forecast_ID from M_Forecast where C_Calendar_ID = ? and C_Year_ID = ? and ForecastType = ?";
 					int M_Forecast_ID = DB.getSQLValue(get_TrxName(), sqlForecast, IForecast.getC_Calendar_ID(),IForecast.getC_Year_ID(),IForecast.getForecastType());
 					
 					if (M_Forecast_ID <= 0)
 						M_Forecast_ID = 0;
 					
-					MForecast Forecast = new MForecast(getCtx(), M_Forecast_ID, get_TrxName());
+					MFTUForecast Forecast = new MFTUForecast(getCtx(), M_Forecast_ID, get_TrxName());
 					
 					Forecast.setC_Calendar_ID(IForecast.getC_Calendar_ID());
 					Forecast.setName(IForecast.getName());
@@ -252,26 +265,29 @@ public class ImportForecast extends FTUProcess{
 					Forecast.setHelp(IForecast.getHelp());
 					Forecast.setC_Year_ID(IForecast.getC_Year_ID());
 					Forecast.setAD_Org_ID(IForecast.getAD_OrgTrx_ID());
+					Forecast.set_ValueOfColumn("ForecastType", IForecast.getForecastType());
 					
 					if(Forecast.save()) {
-					IForecast.setM_Forecast_ID(Forecast.getM_Forecast_ID());
-					IForecast.saveEx();
-					if(M_Forecast_ID > 0)
-						noInsert++;
-					else
-						noUpdate++;
+						IForecast.setM_Forecast_ID(Forecast.getM_Forecast_ID());
+						IForecast.saveEx();
+						if(M_Forecast_ID > 0)
+							noUpdate++;
+						else
+							noInsert++;
 					}
 					else
 					{
 						sql = new StringBuilder ("UPDATE I_Forecast i ")
-								.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||")
+								.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||")
 						.append("'Cannot Insert Forecast, ' ")
 						.append("WHERE I_Forecast_ID=").append(IForecast.getI_Forecast_ID());
 						DB.executeUpdateEx(sql.toString(), get_TrxName());
 						noLineNoInsert++;
 						continue;
 					}
-					MForecastLine line = new MForecastLine(getCtx(), 0, get_TrxName());
+					
+					MFTUForecastLine line = new MFTUForecastLine(getCtx(), 0, get_TrxName());
+					line.setM_Forecast_ID(Forecast.get_ID());
 					line.setAD_Org_ID(IForecast.getAD_OrgTrx_ID());
 					line.setM_Product_ID(IForecast.getM_Product_ID());
 					line.setM_Warehouse_ID(IForecast.getM_Warehouse_ID());
@@ -279,27 +295,31 @@ public class ImportForecast extends FTUProcess{
 					if (IForecast.getSalesRep_ID() > 0)
 						line.setSalesRep_ID(IForecast.getSalesRep_ID());
 					if(IForecast.getC_BPartner_ID() > 0)
-						line.set_ValueOfColumn("C_BPartner_ID", IForecast.getC_BPartner_ID());		
-					
+						line.set_ValueOfColumn("C_BPartner_ID", IForecast.getC_BPartner_ID());
+					//	Added by Jorge Colmenarez, 2021-11-24 17:00
+					if(IForecast.getC_SalesRegion_ID() > 0)
+						line.set_ValueOfColumn("C_SalesRegion_ID", IForecast.getC_SalesRegion_ID());
+					//	End Jorge Colmenarez
 					line.setQty(IForecast.getQty());
 					
 					line.setC_Period_ID(IForecast.getC_Period_ID());
 					line.setDatePromised(IForecast.getDatePromised());
 					if(line.save()) {
 						IForecast.setM_ForecastLine_ID(line.getM_ForecastLine_ID());
+						IForecast.setI_IsImported(true);
+						IForecast.set_ValueOfColumn("Processed", "Y");
 						IForecast.saveEx();
+						noLineInsert++;
 					}else {
 						sql = new StringBuilder ("UPDATE I_Forecast i ")
-								.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||")
-						.append("'Cannot Insert Forecast Line, ' ")
-						.append("WHERE I_Forecast_ID=").append(IForecast.getI_Forecast_ID());
+								.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||")
+								.append("'Cannot Insert Forecast Line, ' ")
+								.append("WHERE I_Forecast_ID=")
+								.append(IForecast.getI_Forecast_ID());
 						DB.executeUpdateEx(sql.toString(), get_TrxName());
 						noLineNoInsert++;
 						continue;
 					}
-					
-					
-					
 				}
 				DB.close(rs, pstmt);
 			}
@@ -318,8 +338,10 @@ public class ImportForecast extends FTUProcess{
 						.append("WHERE I_IsImported<>'Y'").append(clientCheck);
 				no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 				addLog (0, null, new BigDecimal (no), "@Errors@");
-				addLog (0, null, new BigDecimal (noInsert), "@HR_Employee_ID@: @Inserted@");
-				addLog (0, null, new BigDecimal (noUpdate), "@HR_Employee_ID@: @Updated@");
+				addLog (0, null, new BigDecimal (noLineNoInsert), "@Errors@");
+				addLog (0, null, new BigDecimal (noInsert), "@M_Forecast_ID@: @Inserted@");
+				addLog (0, null, new BigDecimal (noUpdate), "@M_Forecast_ID@: @Updated@");
+				addLog (0, null, new BigDecimal (noLineInsert), "@M_ForecastLine_ID@: @Inserted@");
 			}
 			return "@OK@";
 	}
@@ -333,6 +355,6 @@ public class ImportForecast extends FTUProcess{
 
 	public String getImportTableName()
 	{
-		return X_I_Employee.Table_Name;
+		return X_I_Forecast.Table_Name;
 	}
 }

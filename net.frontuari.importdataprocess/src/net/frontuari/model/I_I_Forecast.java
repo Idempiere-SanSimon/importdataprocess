@@ -135,6 +135,21 @@ public interface I_I_Forecast
 
 	public org.compiere.model.I_C_Period getC_Period() throws RuntimeException;
 
+    /** Column name C_SalesRegion_ID */
+    public static final String COLUMNNAME_C_SalesRegion_ID = "C_SalesRegion_ID";
+
+	/** Set Sales Region.
+	  * Sales Region
+	  */
+	public void setC_SalesRegion_ID (int C_SalesRegion_ID);
+
+	/** Get Sales Region.
+	  * Sales Region
+	  */
+	public int getC_SalesRegion_ID();
+
+	public org.compiere.model.I_C_SalesRegion getC_SalesRegion() throws RuntimeException;
+
     /** Column name Created */
     public static final String COLUMNNAME_Created = "Created";
 
@@ -428,6 +443,19 @@ public interface I_I_Forecast
 	  * Quantity
 	  */
 	public BigDecimal getQty();
+
+    /** Column name SalesRegionValue */
+    public static final String COLUMNNAME_SalesRegionValue = "SalesRegionValue";
+
+	/** Set Sales Region Key.
+	  * Key of the Sales Region
+	  */
+	public void setSalesRegionValue (String SalesRegionValue);
+
+	/** Get Sales Region Key.
+	  * Key of the Sales Region
+	  */
+	public String getSalesRegionValue();
 
     /** Column name SalesRep_ID */
     public static final String COLUMNNAME_SalesRep_ID = "SalesRep_ID";
