@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.DBException;
+import org.compiere.model.PO;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 
@@ -80,7 +81,7 @@ public class ImportForecast extends FTUProcess{
 			if (log.isLoggable(Level.FINE)) log.fine("Set Org=" + no);
 			//
 			sql = new StringBuilder ("UPDATE I_Forecast i ")
-					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid BPartner, ' ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Organization, ' ")
 					.append("WHERE OrgValue IS NOT NULL AND AD_OrgTrx_ID IS NULL")
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
@@ -155,23 +156,6 @@ public class ImportForecast extends FTUProcess{
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.CONFIG)) log.config("Invalid Period=" + no);
 			
-			//SalesRep
-			sql = new StringBuilder ("UPDATE I_Forecast i ")
-					.append("SET SalesRep_ID=(SELECT u.AD_User_ID FROM AD_User u ")
-					.append("WHERE u.Name = i.SalesRep_Name ")
-					.append(" AND u.AD_Client_ID=i.AD_Client_ID) ");
-			sql.append("WHERE SalesRep_Name IS NOT NULL AND SalesRep_ID IS NULL")
-					.append(" AND I_IsImported<>'Y'").append(clientCheck);
-			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Set SalesRep_ID=" + no);
-			//
-			sql = new StringBuilder ("UPDATE I_Forecast i ")
-					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid SalesRep, ' ")
-					.append("WHERE SalesRep_Name IS NOT NULL AND SalesRep_ID IS NULL")
-					.append(" AND I_IsImported<>'Y'").append(clientCheck);
-			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.CONFIG)) log.config("Invalid SalesRep_Name=" + no);
-			
 			//	Added by Jorge Colmenarez, 2021-11-24 16:58
 			//	Set SalesRegion
 			sql = new StringBuilder ("UPDATE I_Forecast i ")
@@ -189,6 +173,40 @@ public class ImportForecast extends FTUProcess{
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.CONFIG)) log.config("Invalid SalesRegion=" + no);
+			
+			//SalesRep
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET SalesRep_ID=(SELECT u.AD_User_ID FROM AD_User u ")
+					.append("WHERE u.Name = i.SalesRep_Name ")
+					.append(" AND u.AD_Client_ID=i.AD_Client_ID) ");
+			sql.append("WHERE SalesRep_Name IS NOT NULL AND SalesRep_ID IS NULL")
+					.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set SalesRep_ID=" + no);
+			//
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid SalesRep, ' ")
+					.append("WHERE SalesRep_Name IS NOT NULL AND SalesRep_ID IS NULL")
+					.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.CONFIG)) log.config("Invalid SalesRep_Name=" + no);
+
+			//SalesRep from SalesRegion
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET SalesRep_ID=(SELECT sr.SalesRep_ID FROM C_SalesRegion sr ")
+					.append("WHERE sr.C_SalesRegion_ID = i.C_SalesRegion_ID ")
+					.append(" AND sr.AD_Client_ID=i.AD_Client_ID) ");
+			sql.append("WHERE C_SalesRegion_ID IS NOT NULL AND SalesRep_ID IS NULL")
+					.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set SalesRep_ID=" + no);
+			//
+			sql = new StringBuilder ("UPDATE I_Forecast i ")
+					.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid SalesRep from SalesRegion, ' ")
+					.append("WHERE C_SalesRegion_ID IS NOT NULL AND SalesRep_ID IS NULL")
+					.append(" AND I_IsImported<>'Y'").append(clientCheck);
+			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.CONFIG)) log.config("Invalid SalesRep_Name=" + no);
 			//	End Jorge Colmenarez
 			//Year
 			sql = new StringBuilder ("UPDATE I_Forecast i ")
@@ -225,6 +243,33 @@ public class ImportForecast extends FTUProcess{
 					.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.CONFIG)) log.config("Invalid Calendar=" + no);
+			
+			//	Added by Jorge Colmenarez, 2021-12-02 09:22
+			//	Check if exists column used only on Arichuna Company
+			X_I_Forecast f = new X_I_Forecast(getCtx(), 0, get_TrxName());
+			int existsCustomerType = f.get_ColumnIndex("ARI_CustomerType_ID");
+			if(existsCustomerType != -1)
+			{
+				//	Set CustomerType
+				sql = new StringBuilder ("UPDATE I_Forecast i ")
+						.append("SET ARI_CustomerType_ID=(SELECT MAX(ct.ARI_CustomerType_ID) FROM ARI_CustomerType ct ")
+						.append("WHERE (ct.Value=i.CustomerTypeValue OR ct.Name = i.CustomerTypeValue)")
+						.append(" AND ct.AD_Client_ID=i.AD_Client_ID) ");
+				sql.append("WHERE CustomerTypeValue IS NOT NULL AND ARI_CustomerType_ID IS NULL")
+						.append(" AND I_IsImported<>'Y'").append(clientCheck);
+				no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+				if (log.isLoggable(Level.FINE)) log.fine("Set CustomerType=" + no);
+				//
+				sql = new StringBuilder ("UPDATE I_Forecast i ")
+						.append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid CustomerType, ' ")
+						.append("WHERE CustomerTypeValue IS NOT NULL AND ARI_CustomerType_ID IS NULL")
+						.append(" AND I_IsImported<>'Y'").append(clientCheck);
+				no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+				if (log.isLoggable(Level.CONFIG)) log.config("Invalid Customer Type=" + no);
+			}
+			else
+				f = null;
+			//	End Jorge Colmenarez
 			
 			commitEx();
 			if (p_IsValidateOnly)
@@ -299,6 +344,11 @@ public class ImportForecast extends FTUProcess{
 					//	Added by Jorge Colmenarez, 2021-11-24 17:00
 					if(IForecast.getC_SalesRegion_ID() > 0)
 						line.set_ValueOfColumn("C_SalesRegion_ID", IForecast.getC_SalesRegion_ID());
+					//	Added by Jorge Colmenarez, 2021-12-02 09:33 
+					//	set Customer Type if exists 
+					if(IForecast.get_ColumnIndex("ARI_CustomerType_ID") != -1)
+						if(IForecast.get_ValueAsInt("ARI_CustomerType_ID") > 0)
+							line.set_ValueOfColumn("ARI_CustomerType_ID", IForecast.get_ValueAsInt("ARI_CustomerType_ID"));
 					//	End Jorge Colmenarez
 					line.setQty(IForecast.getQty());
 					
