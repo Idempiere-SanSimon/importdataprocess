@@ -58,6 +58,8 @@ public class ImportGLJournal extends FTUProcess
 	private boolean			m_IsValidateOnly = false;
 	/** Import if no Errors				*/
 	private boolean			m_IsImportOnlyNoErrors = true;
+	/** Import by Organization			*/
+	private boolean			m_IsImportbyOrg = true;
 
 
 	/**
@@ -85,6 +87,8 @@ public class ImportGLJournal extends FTUProcess
 				m_IsImportOnlyNoErrors = "Y".equals(para[i].getParameter());
 			else if (name.equals("DeleteOldImported"))
 				m_DeleteOldImported = "Y".equals(para[i].getParameter());
+			else if (name.equals("ImportByOrg"))
+				m_IsImportbyOrg = "Y".equals(para[i].getParameter());
 			else
 				log.log(Level.SEVERE, "Unknown Parameter: " + name);
 		}
@@ -747,64 +751,124 @@ public class ImportGLJournal extends FTUProcess
 				if (impJournalDocumentNo == null)
 					impJournalDocumentNo = "";
 				Timestamp impDateAcct = TimeUtil.getDay(imp.getDateAcct());
-				if (journal == null
-					|| imp.isCreateNewJournal()
-					|| prevOrgId!=imp.getAD_Org_ID()
-					|| !JournalDocumentNo.equals(impJournalDocumentNo)
-					|| journal.getC_DocType_ID() != imp.getC_DocType_ID()
-					|| journal.getGL_Category_ID() != imp.getGL_Category_ID()
-					|| !journal.getPostingType().equals(imp.getPostingType())
-					|| journal.getC_Currency_ID() != imp.getC_Currency_ID()
-						|| journal.getAD_Org_ID() != imp.getAD_Org_ID()
-					|| !impDateAcct.equals(DateAcct)
-				)
+				if(m_IsImportbyOrg)
 				{
-					JournalDocumentNo = impJournalDocumentNo;	//	cannot compare real DocumentNo
-					DateAcct = impDateAcct;
-					journal = new MJournal (getCtx(), 0, get_TrxName());
-					if (batch != null)
-						journal.setGL_JournalBatch_ID(batch.getGL_JournalBatch_ID());
-					journal.setClientOrg(imp.getAD_Client_ID(), imp.getAD_Org_ID());
-					//
-					String description = imp.getBatchDescription();
-					if (description == null || description.length() == 0)
-						description = "(Import)";
-					journal.setDescription (description);
-					if (imp.getJournalDocumentNo() != null && imp.getJournalDocumentNo().length() > 0)
-						journal.setDocumentNo (imp.getJournalDocumentNo());
-					//
-					journal.setC_AcctSchema_ID (imp.getC_AcctSchema_ID());
-					journal.setC_DocType_ID (imp.getC_DocType_ID());
-					journal.setGL_Category_ID (imp.getGL_Category_ID());
-					journal.setPostingType (imp.getPostingType());
-					journal.setGL_Budget_ID(imp.getGL_Budget_ID());
-					//
-					journal.setCurrency (imp.getC_Currency_ID(), imp.getC_ConversionType_ID(), imp.getCurrencyRate());
-					//
-					journal.setC_Period_ID(imp.getC_Period_ID());
-					journal.setDateAcct(imp.getDateAcct());		//	sets Period if not defined
-					journal.setDateDoc (imp.getDateAcct());
-					
-					
-					//set DocBPartner
-					if(Doc_BPartner_ID>0)
-						journal.set_ValueOfColumn("C_BPartner_ID", Doc_BPartner_ID);
-					//
-					if (!journal.save())
-					{
-						log.log(Level.SEVERE, "Journal not saved");
-						Exception ex = CLogger.retrieveException();
-						if (ex != null)
+					if (journal == null
+							|| imp.isCreateNewJournal()
+							|| prevOrgId!=imp.getAD_Org_ID()
+							|| !JournalDocumentNo.equals(impJournalDocumentNo)
+							|| journal.getC_DocType_ID() != imp.getC_DocType_ID()
+							|| journal.getGL_Category_ID() != imp.getGL_Category_ID()
+							|| !journal.getPostingType().equals(imp.getPostingType())
+							|| journal.getC_Currency_ID() != imp.getC_Currency_ID()
+								|| journal.getAD_Org_ID() != imp.getAD_Org_ID()
+							|| !impDateAcct.equals(DateAcct)
+						)
 						{
-							addLog (0, null, null, ex.getLocalizedMessage());
-							throw ex;
+							JournalDocumentNo = impJournalDocumentNo;	//	cannot compare real DocumentNo
+							DateAcct = impDateAcct;
+							journal = new MJournal (getCtx(), 0, get_TrxName());
+							if (batch != null)
+								journal.setGL_JournalBatch_ID(batch.getGL_JournalBatch_ID());
+							journal.setClientOrg(imp.getAD_Client_ID(), imp.getAD_Org_ID());
+							//
+							String description = imp.getBatchDescription();
+							if (description == null || description.length() == 0)
+								description = "(Import)";
+							journal.setDescription (description);
+							if (imp.getJournalDocumentNo() != null && imp.getJournalDocumentNo().length() > 0)
+								journal.setDocumentNo (imp.getJournalDocumentNo());
+							//
+							journal.setC_AcctSchema_ID (imp.getC_AcctSchema_ID());
+							journal.setC_DocType_ID (imp.getC_DocType_ID());
+							journal.setGL_Category_ID (imp.getGL_Category_ID());
+							journal.setPostingType (imp.getPostingType());
+							journal.setGL_Budget_ID(imp.getGL_Budget_ID());
+							//
+							journal.setCurrency (imp.getC_Currency_ID(), imp.getC_ConversionType_ID(), imp.getCurrencyRate());
+							//
+							journal.setC_Period_ID(imp.getC_Period_ID());
+							journal.setDateAcct(imp.getDateAcct());		//	sets Period if not defined
+							journal.setDateDoc (imp.getDateAcct());
+							
+							
+							//set DocBPartner
+							if(Doc_BPartner_ID>0)
+								journal.set_ValueOfColumn("C_BPartner_ID", Doc_BPartner_ID);
+							//
+							if (!journal.save())
+							{
+								log.log(Level.SEVERE, "Journal not saved");
+								Exception ex = CLogger.retrieveException();
+								if (ex != null)
+								{
+									addLog (0, null, null, ex.getLocalizedMessage());
+									throw ex;
+								}
+								break;
+							}
+							prevOrgId=imp.getAD_Org_ID();
+							noInsertJournal++;
 						}
-						break;
-					}
-					prevOrgId=imp.getAD_Org_ID();
-					noInsertJournal++;
 				}
-				
+				else
+				{
+					if (journal == null
+							|| imp.isCreateNewJournal()
+							|| !JournalDocumentNo.equals(impJournalDocumentNo)
+							|| journal.getC_DocType_ID() != imp.getC_DocType_ID()
+							|| journal.getGL_Category_ID() != imp.getGL_Category_ID()
+							|| !journal.getPostingType().equals(imp.getPostingType())
+							|| journal.getC_Currency_ID() != imp.getC_Currency_ID()
+							|| !impDateAcct.equals(DateAcct)
+						)
+						{
+							JournalDocumentNo = impJournalDocumentNo;	//	cannot compare real DocumentNo
+							DateAcct = impDateAcct;
+							journal = new MJournal (getCtx(), 0, get_TrxName());
+							if (batch != null)
+								journal.setGL_JournalBatch_ID(batch.getGL_JournalBatch_ID());
+							journal.setClientOrg(imp.getAD_Client_ID(), imp.getAD_Org_ID());
+							//
+							String description = imp.getBatchDescription();
+							if (description == null || description.length() == 0)
+								description = "(Import)";
+							journal.setDescription (description);
+							if (imp.getJournalDocumentNo() != null && imp.getJournalDocumentNo().length() > 0)
+								journal.setDocumentNo (imp.getJournalDocumentNo());
+							//
+							journal.setC_AcctSchema_ID (imp.getC_AcctSchema_ID());
+							journal.setC_DocType_ID (imp.getC_DocType_ID());
+							journal.setGL_Category_ID (imp.getGL_Category_ID());
+							journal.setPostingType (imp.getPostingType());
+							journal.setGL_Budget_ID(imp.getGL_Budget_ID());
+							//
+							journal.setCurrency (imp.getC_Currency_ID(), imp.getC_ConversionType_ID(), imp.getCurrencyRate());
+							//
+							journal.setC_Period_ID(imp.getC_Period_ID());
+							journal.setDateAcct(imp.getDateAcct());		//	sets Period if not defined
+							journal.setDateDoc (imp.getDateAcct());
+							
+							
+							//set DocBPartner
+							if(Doc_BPartner_ID>0)
+								journal.set_ValueOfColumn("C_BPartner_ID", Doc_BPartner_ID);
+							//
+							if (!journal.save())
+							{
+								log.log(Level.SEVERE, "Journal not saved");
+								Exception ex = CLogger.retrieveException();
+								if (ex != null)
+								{
+									addLog (0, null, null, ex.getLocalizedMessage());
+									throw ex;
+								}
+								break;
+							}
+							prevOrgId=imp.getAD_Org_ID();
+							noInsertJournal++;
+						}
+				}
 
 				//	Lines
 				MJournalLine line = new MJournalLine (journal);
