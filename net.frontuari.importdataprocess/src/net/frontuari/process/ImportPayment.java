@@ -30,6 +30,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 import net.frontuari.base.FTUProcess;
+import net.frontuari.model.FTUMPayment;
 
 /**
  * 	Import Payments
@@ -497,7 +498,7 @@ public class ImportPayment extends FTUProcess
 				}
 				
 				//	New Payment
-				MPayment payment = new MPayment (m_ctx, 0, get_TrxName());
+				FTUMPayment payment = new FTUMPayment (m_ctx, 0, get_TrxName());
 				payment.setAD_Org_ID(imp.getAD_Org_ID());
 				payment.setDocumentNo(imp.get_ValueAsString("DocumentNo"));
 				payment.setPONum(imp.getPONum());
