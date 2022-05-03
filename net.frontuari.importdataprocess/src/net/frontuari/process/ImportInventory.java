@@ -49,6 +49,7 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.ValueNamePair;
 
 import net.frontuari.base.FTUProcess;
+import net.frontuari.model.FTUMInventoryLine;
 
 /**
  *	Import Physical Inventory from I_Inventory
@@ -590,7 +591,7 @@ public class ImportInventory extends FTUProcess implements ImportProcess
 			costingDoc.saveEx();
 		}
 		
-		MInventoryLine costingLine = new MInventoryLine(getCtx(), 0, get_TrxName());
+		FTUMInventoryLine costingLine = new FTUMInventoryLine(getCtx(), 0, get_TrxName());
 		costingLine.setM_Inventory_ID(costingDoc.getM_Inventory_ID());
 		costingLine.setM_Product_ID(cost.getM_Product_ID());
 		costingLine.setCurrentCostPrice(cost.getCurrentCostPrice());
