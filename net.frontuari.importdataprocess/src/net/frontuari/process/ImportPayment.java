@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.compiere.model.I_I_Payment;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MPayment;
 import org.compiere.model.X_I_Payment;
@@ -467,6 +468,25 @@ public class ImportPayment extends FTUProcess
 			log.warning ("Invalid OrgTrx=" + no);
 		//	End Jorge Colmenarez
 
+		//David Castillo 23/08/2022 covencaucho new field CVC_CashFlowConcept_ID
+		MPayment p = new MPayment(getCtx(), getRecord_ID(), get_TrxName());
+		if (p.get_ColumnIndex("CVC_CashFlowConcept_ID") != -1) {
+		sql = new StringBuilder ("UPDATE I_Payment i ")
+				.append("SET CVC_CashFlowConcept_ID=(SELECT o.CVC_CashFlowConcept_ID FROM CVC_CashFlowConcept o ")
+				.append(" WHERE o.Value=i.CVC_CashFlowConceptValue AND i.AD_Client_ID=o.AD_Client_ID) ")
+				.append("WHERE CVC_CashFlowConcept_ID IS NULL AND CVC_CashFlowConceptValue IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set CVC_CashFlowConcept_ID from CVC_CashFlowConceptValue=" + no);
+			sql = new StringBuilder ("UPDATE I_Payment i ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid CVC_CashFlowConceptValue, '")
+				.append("WHERE CVC_CashFlowConcept_ID IS NULL AND CVC_CashFlowConceptValue IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				log.warning ("Invalid CVC_CashFlowConceptValue=" + no);
+		}
+		
 		commitEx();
 		if (p_IsValidateOnly)
 		{
@@ -587,6 +607,11 @@ public class ImportPayment extends FTUProcess
 				if(imp.get_ValueAsInt("AD_OrgTrx_ID") > 0)
 					payment.setAD_OrgTrx_ID(imp.get_ValueAsInt("AD_OrgTrx_ID"));
 				//	End Jorge Colmenarez
+				//David Castillo CVC_CashFlowConcept_ID Validation
+				if (imp.get_ColumnIndex("CVC_CashFlowConcept_ID") != -1) {
+					if (imp.get_ValueAsInt("CVC_CashFlowConcept_ID")>0)
+						payment.set_ValueOfColumn("CVC_CashFlowConcept_ID", imp.get_ValueAsInt("CVC_CashFlowConcept_ID"));
+				}
 				//	Save payment
 				if (payment.save())
 				{
