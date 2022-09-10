@@ -34,7 +34,8 @@ import org.compiere.model.X_I_Product;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
+
 
 /**
  *	Import Products from I_Product
@@ -46,7 +47,7 @@ import net.frontuari.base.FTUProcess;
  * 			<li>FR [ 2788278 ] Data Import Validator - migrate core processes
  * 				https://sourceforge.net/tracker/?func=detail&aid=2788278&group_id=176962&atid=879335
  */
-public class ImportProduct extends FTUProcess implements ImportProcess
+public class ImportProduct extends CustomProcess implements ImportProcess
 {
 	/**	Client to be imported to		*/
 	private int				m_AD_Client_ID = 0;

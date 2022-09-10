@@ -39,7 +39,8 @@ import org.compiere.process.ProcessInfo;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
+
 
 /**
  *	Import BPartners from I_BPartner
@@ -55,7 +56,7 @@ import net.frontuari.base.FTUProcess;
  * 	@author Jorge Colmenarez, Frontuari, C.A. http://frontuari.net
  * 			Support for LVE Fields Required, Add Support for Fields for Customer BPartners
  */
-public class ImportBPartner extends FTUProcess
+public class ImportBPartner extends CustomProcess
 implements ImportProcess
 {
 	/**	Client to be imported to		*/

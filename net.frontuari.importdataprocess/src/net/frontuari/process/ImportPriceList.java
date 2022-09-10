@@ -40,14 +40,15 @@ import org.compiere.util.AdempiereUserError;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
+
 
 /**
  *	Import Price Lists from I_PriceList
  *
  * 	@author 	Carlos Ruiz
  */
-public class ImportPriceList extends FTUProcess
+public class ImportPriceList extends CustomProcess
 {
 	/**	Client to be imported to		*/
 	private int				m_AD_Client_ID = 0;

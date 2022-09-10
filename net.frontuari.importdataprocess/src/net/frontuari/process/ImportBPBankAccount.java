@@ -13,9 +13,10 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
 
-public class ImportBPBankAccount extends FTUProcess{
+
+public class ImportBPBankAccount extends CustomProcess{
 	
 	private boolean	p_deleteOldImported = false;
 	

@@ -13,17 +13,17 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2020 Frontuari, C.A. <http://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2021 Frontuari and contributors (see README.md file).
  */
 
 package net.frontuari.component;
 
-import net.frontuari.base.FTUCalloutFactory;
+import net.frontuari.base.CustomCalloutFactory;
 
 /**
  * Callout Factory
  */
-public class CalloutFactory extends FTUCalloutFactory {
+public class CalloutFactory extends CustomCalloutFactory {
 
 	/**
 	 * For initialize class. Register the custom callout to build

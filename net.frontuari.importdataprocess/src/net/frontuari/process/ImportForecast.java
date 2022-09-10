@@ -11,12 +11,13 @@ import org.compiere.model.PO;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
+
 import net.frontuari.model.MFTUForecast;
 import net.frontuari.model.MFTUForecastLine;
 import net.frontuari.model.X_I_Forecast;
 
-public class ImportForecast extends FTUProcess{
+public class ImportForecast extends CustomProcess{
 
 	/**	Client to be imported to		*/
 	private int				m_AD_Client_ID = 0;

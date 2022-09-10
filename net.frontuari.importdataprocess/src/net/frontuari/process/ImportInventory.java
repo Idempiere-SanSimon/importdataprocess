@@ -48,7 +48,8 @@ import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.ValueNamePair;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
+
 import net.frontuari.model.FTUMInventoryLine;
 
 /**
@@ -61,7 +62,7 @@ import net.frontuari.model.FTUMInventoryLine;
  *  Carlos Ruiz - globalqss - IDEMPIERE-281 Extend Import Inventory to support also internal use
  *  Deepak Pansheriya - logilite - IDEMPIERE-2314 Making import inventory process extendible
  */
-public class ImportInventory extends FTUProcess implements ImportProcess
+public class ImportInventory extends CustomProcess implements ImportProcess
 {
 	/**	Client to be imported to		*/
 	private int				p_AD_Client_ID = 0;

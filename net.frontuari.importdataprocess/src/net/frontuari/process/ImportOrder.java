@@ -34,7 +34,8 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
+
 
 /**
  *	Import Order from I_Order
@@ -44,7 +45,7 @@ import net.frontuari.base.FTUProcess;
  * 	@author 	Jorg Janke
  * 	@version 	$Id: ImportOrder.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
-public class ImportOrder extends FTUProcess
+public class ImportOrder extends CustomProcess
 {
 	/**	Client to be imported to		*/
 	private int				m_AD_Client_ID = 0;

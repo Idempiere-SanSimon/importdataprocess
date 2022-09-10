@@ -13,12 +13,12 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2020 Frontuari, C.A. <http://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2021 Frontuari and contributors (see README.md file).
  */
 
 package net.frontuari.component;
 
-import net.frontuari.base.FTUProcessFactory;
+import net.frontuari.base.CustomProcessFactory;
 import net.frontuari.process.ImportBPBankAccount;
 import net.frontuari.process.ImportBPartner;
 import net.frontuari.process.ImportDiscountSchema;
@@ -39,7 +39,7 @@ import net.frontuari.process.ImportRequisition;
 /**
  * Process Factory
  */
-public class ProcessFactory extends FTUProcessFactory {
+public class ProcessFactory extends CustomProcessFactory {
 
 	/**
 	 * For initialize class. Register the process to build

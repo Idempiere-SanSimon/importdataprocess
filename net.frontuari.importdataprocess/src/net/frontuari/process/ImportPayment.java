@@ -30,8 +30,9 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
-import net.frontuari.base.FTUProcess;
-import net.frontuari.model.FTUMPayment;
+import net.frontuari.base.CustomProcess;
+
+import org.compiere.model.MPayment;;
 
 /**
  * 	Import Payments
@@ -42,7 +43,7 @@ import net.frontuari.model.FTUMPayment;
  *  Contributor(s):
  *    Carlos Ruiz - globalqss - FR [ 1992542 ] Import Payment doesn't have DocAction parameter
  */
-public class ImportPayment extends FTUProcess
+public class ImportPayment extends CustomProcess
 {
 	/**	Organization to be imported to	*/
 	private int				p_AD_Org_ID = 0;
@@ -518,7 +519,7 @@ public class ImportPayment extends FTUProcess
 				}
 				
 				//	New Payment
-				FTUMPayment payment = new FTUMPayment (m_ctx, 0, get_TrxName());
+				MPayment payment = new MPayment (m_ctx, 0, get_TrxName());
 				payment.setAD_Org_ID(imp.getAD_Org_ID());
 				payment.setDocumentNo(imp.get_ValueAsString("DocumentNo"));
 				payment.setPONum(imp.getPONum());

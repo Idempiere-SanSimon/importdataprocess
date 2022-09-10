@@ -1,10 +1,10 @@
 Manifest-Version: 1.0
 Bundle-Category: idempiere-plugin
 Bundle-ManifestVersion: 2
-Bundle-Name: Import Data Process
-Bundle-SymbolicName: net.frontuari.importdataprocess;singleton:=true
-Bundle-Version: 7.1.0.qualifier
-Bundle-Vendor: Frontuari, C.A. <http://frontuari.net>
+Bundle-Name: importdataprocess
+Bundle-SymbolicName: net.frontuari.importdataprocess
+Bundle-Version: 8.2.0.qualifier
+Bundle-Vendor: Frontuari
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.apache.commons.lang3,
  org.adempiere.base,
@@ -17,9 +17,8 @@ Require-Bundle: org.apache.commons.lang3,
  zkbind,
  zkplus,
  zul,
- zweb,
- customfrontuari;bundle-version="7.1.0"
-Import-Package: org.osgi.service.event;version="1.4.0"
+ zweb
+Import-Package: org.osgi.service.event
 Service-Component: OSGI-INF/ModelFactory.xml,
  OSGI-INF/EventFactory.xml,
  OSGI-INF/CalloutFactory.xml,
@@ -27,4 +26,4 @@ Service-Component: OSGI-INF/ModelFactory.xml,
  OSGI-INF/FormFactory.xml
 Bundle-ClassPath: .,
  lib/freemarker.jar
-Bundle-Activator: org.adempiere.plugin.utils.AdempiereActivator
+Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator

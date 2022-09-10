@@ -34,7 +34,8 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
+
 
 /**
  *	Import Invoice from I_Invoice
@@ -42,7 +43,7 @@ import net.frontuari.base.FTUProcess;
  * 	@author 	Jorg Janke
  * 	@version 	$Id: ImportInvoice.java,v 1.1 2007/09/05 09:27:31 cruiz Exp $
  */
-public class ImportInvoice extends FTUProcess
+public class ImportInvoice extends CustomProcess
 {
 	/**	Client to be imported to		*/
 	private int				m_AD_Client_ID = 0;

@@ -13,12 +13,13 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2020 Frontuari, C.A. <http://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2021 Frontuari and contributors (see README.md file).
  */
 
 package net.frontuari.component;
 
-import net.frontuari.base.FTUModelFactory;
+
+import net.frontuari.base.CustomModelFactory;
 import net.frontuari.model.FTUMInventoryLine;
 import net.frontuari.model.X_I_DiscountSchema;
 import net.frontuari.model.X_I_Employee;
@@ -30,7 +31,7 @@ import net.frontuari.model.X_I_Requisition;
 /**
  * Model Factory
  */
-public class ModelFactory extends FTUModelFactory {
+public class ModelFactory extends CustomModelFactory {
 
 	/**
 	 * For initialize class. Register the models to build

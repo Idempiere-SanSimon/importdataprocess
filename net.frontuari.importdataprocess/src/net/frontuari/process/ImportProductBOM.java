@@ -24,7 +24,8 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
+
 import net.frontuari.model.I_I_Product_BOM;
 import org.eevolution.model.MPPProductBOM;
 import org.eevolution.model.MPPProductBOMLine;
@@ -38,7 +39,7 @@ import net.frontuari.model.X_I_Product_BOM;
  * @version $Id: ImportProductBOM.java, v 1.3, 14 sept 2010
  */
 
-public class ImportProductBOM extends FTUProcess {
+public class ImportProductBOM extends CustomProcess {
 
 	private boolean m_DeleteOldImported = false;
 	private boolean m_IsImportOnlyNoErrors = true;

@@ -34,7 +34,8 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.TimeUtil;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
+
 
 /**
  *	Import GL Journal Batch/JournalLine from I_Journal
@@ -42,7 +43,7 @@ import net.frontuari.base.FTUProcess;
  * 	@author 	Jorg Janke
  * 	@version 	$Id: ImportGLJournal.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
-public class ImportGLJournal extends FTUProcess
+public class ImportGLJournal extends CustomProcess
 {
 	/**	Client to be imported to		*/
 	private int 			m_AD_Client_ID = 0;

@@ -11,10 +11,11 @@ import org.compiere.model.MDiscountSchemaLine;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
+
 import net.frontuari.model.X_I_DiscountSchema;
 
-public class ImportDiscountSchema extends FTUProcess {
+public class ImportDiscountSchema extends CustomProcess {
 
 	public ImportDiscountSchema() {
 	}

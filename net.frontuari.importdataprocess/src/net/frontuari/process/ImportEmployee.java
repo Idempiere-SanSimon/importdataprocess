@@ -28,7 +28,7 @@ import org.adempiere.model.ImportValidator;
 import org.adempiere.process.ImportProcess;
 import org.compiere.model.ModelValidationEngine;
 
-import net.frontuari.base.FTUProcess;
+import net.frontuari.base.CustomProcess;
 import net.frontuari.model.X_I_Employee;
 
 import org.compiere.process.ProcessInfoParameter;
@@ -41,7 +41,7 @@ import org.eevolution.model.X_HR_Employee;
  * 	@author 	Jorge Colmenarez
  * 	@version 	$Id: ImportEmployee.java,v 1.0 2021/03/25 12:46 jlctmaster Exp $
  */
-public class ImportEmployee extends FTUProcess implements ImportProcess {
+public class ImportEmployee extends CustomProcess implements ImportProcess {
 
 	/**	Client to be imported to		*/
 	private int				m_AD_Client_ID = 0;
