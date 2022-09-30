@@ -36,7 +36,7 @@ import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategoryAcct;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.PO;
-import org.compiere.model.X_I_Inventory;
+import net.frontuari.model.X_I_Inventory;
 import org.compiere.process.DocAction;
 import org.compiere.process.DocumentEngine;
 import org.compiere.process.ProcessInfoParameter;
@@ -294,6 +294,7 @@ public class ImportInventory extends FTUProcess implements ImportProcess
 			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate (sql.toString (), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set Product from Value=" + no);
+		
 		//product value changed to product name
 		sql = new StringBuilder ("UPDATE I_Inventory i ")
 			  .append("SET M_Product_ID=(SELECT MAX(M_Product_ID) FROM M_Product p")
@@ -308,6 +309,8 @@ public class ImportInventory extends FTUProcess implements ImportProcess
 				  .append("WHERE M_Product_ID IS NULL AND UPC IS NOT NULL")
 				  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 			no = DB.executeUpdate (sql.toString (), get_TrxName());
+			
+			
 		if (log.isLoggable(Level.FINE)) log.fine("Set Product from UPC=" + no);
 		sql = new StringBuilder ("UPDATE I_Inventory ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Product, ' ")
@@ -358,7 +361,48 @@ public class ImportInventory extends FTUProcess implements ImportProcess
 		no = DB.executeUpdate (sql.toString (), get_TrxName());
 		if (no != 0)
 			log.warning ("Required charge=" + no);
+		
+		//added by david castillo 30/09/2022 support for ad_org_id, user1_id, activity and documentno
 
+		//	Org_ID
+		sql = new StringBuilder ("UPDATE I_Inventory i ")
+			.append("SET AD_Org_ID=COALESCE((SELECT d.AD_Org_ID FROM AD_Org d")
+			.append(" WHERE d.Value=i.OrgValue AND  i.AD_Client_ID=d.AD_Client_ID)," + p_AD_Org_ID+ ")")
+			.append(" OrgValue IS NOT NULL")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set AD_Org_ID=" + no);
+		
+		//User1
+		sql = new StringBuilder ("UPDATE I_Inventory o ")
+				  .append("SET User1_ID=(SELECT C_ElementValue_ID FROM C_ElementValue c")
+				  .append(" WHERE o.User1Name=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
+				  .append("WHERE User1_ID IS NULL AND User1Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set User1=" + no);
+			// Set proper error message
+			sql = new StringBuilder ("UPDATE I_Inventory ")
+				  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found User1_ID, ' ")
+				  .append("WHERE User1_ID IS NULL AND User1Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				log.warning("No User1Name=" + no);
+			
+		sql = new StringBuilder ("UPDATE I_Inventory o ")
+					  .append("SET C_Activity_ID=(SELECT C_Activity_ID FROM C_Activity c")
+					  .append(" WHERE o.ActivityName=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
+					  .append("WHERE C_Activity_ID IS NULL AND ActivityName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (log.isLoggable(Level.FINE)) log.fine("Set Activity=" + no);
+				// Set proper error message
+				sql = new StringBuilder ("UPDATE I_Inventory ")
+					  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Activity, ' ")
+					  .append("WHERE C_Activity_ID IS NULL AND ActivityName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+					log.warning("No Activity=" + no);
+				
+		//end david castillo
 		ModelValidationEngine.get().fireImportValidate(this, null, null, ImportValidator.TIMING_AFTER_VALIDATE);
 		
 		commitEx();
@@ -422,6 +466,16 @@ public class ImportInventory extends FTUProcess implements ImportProcess
 					inventory.setM_Warehouse_ID(imp.getM_Warehouse_ID());
 					inventory.setMovementDate(MovementDate);
 					
+					//added saving of user1, activity and document no
+					if (imp.getDocumentNo() != null)
+					inventory.setDocumentNo(imp.getDocumentNo());
+					
+					if (imp.getUser1_ID()>0)
+						inventory.setUser1_ID(imp.getUser1_ID());
+					
+					if (imp.getC_Activity_ID()>0)
+						inventory.setC_Activity_ID(imp.getC_Activity_ID());
+					//po
 					ModelValidationEngine.get().fireImportValidate(this, imp, inventory, ImportValidator.TIMING_BEFORE_IMPORT);
 					//
 					if (!inventory.save())
