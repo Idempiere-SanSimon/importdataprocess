@@ -93,6 +93,10 @@ public class ImportInventory extends FTUProcess implements ImportProcess
 	private int 			p_C_DocType_ID = 0;
 	/** Conversion Type for Update Costing */
 	private int 			p_C_ConversionType_ID = 0;
+	
+	/**	Only validate, don't import		*/
+	private boolean			p_IsValidateOnly = false;
+	
 	/**
 	 *  Prepare - e.g., get Parameters.
 	 */
@@ -130,6 +134,8 @@ public class ImportInventory extends FTUProcess implements ImportProcess
 				p_C_DocType_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else if (name.equals("C_ConversionType_ID"))
 				p_C_ConversionType_ID = ((BigDecimal)para[i].getParameter()).intValue();
+			else if (name.equals("IsValidateOnly"))
+				p_IsValidateOnly = para[i].getParameterAsBoolean();
 			else
 				log.log(Level.WARNING, "Unknown Parameter: " + name);
 		}
@@ -406,7 +412,11 @@ public class ImportInventory extends FTUProcess implements ImportProcess
 		ModelValidationEngine.get().fireImportValidate(this, null, null, ImportValidator.TIMING_AFTER_VALIDATE);
 		
 		commitEx();
-		
+		if (p_IsValidateOnly)
+		{
+			return "Validated";
+		}
+		//	--
 		/*********************************************************************/
 
 		MInventory inventory = null;
