@@ -395,6 +395,56 @@ public class ImportInOut extends FTUProcess {
 		if (no != 0)
 			log.warning ("Invalid Locator=" + no);
 		
+		//Added by David Castillo 05/10/2022 saving new fields SalesRep, Invoice header and line
+		
+		//SetSalesRep 
+		sql = new StringBuilder ("UPDATE I_InOut o ")
+		  .append("SET SalesRep_ID=(SELECT AD_User_ID FROM AD_User c")
+		  .append(" WHERE o.SalesRep_Name=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
+		  .append("WHERE SalesRep_ID IS NULL AND SalesRep_Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set User1=" + no);
+		// Set proper error message
+		sql = new StringBuilder ("UPDATE I_InOut ")
+		  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found SalesRep_ID, ' ")
+		  .append("WHERE SalesRep_ID IS NULL AND SalesRep_Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+			log.warning("No SalesRep_ID=" + no);
+			
+			// Invoice from DocumentNo
+			
+			sql = new StringBuilder ("UPDATE I_InOut i ")
+			  .append("SET C_Invoice_ID=(SELECT MAX(C_Invoice_ID) FROM C_Invoice o")
+			  .append(" WHERE i.InvoiceDocumentNo=o.DocumentNo AND i.AD_Client_ID=o.AD_Client_ID  AND i.AD_Org_ID=o.AD_Org_ID)")
+			  .append("WHERE C_Invoice_ID IS NULL AND InvoiceDocumentNo IS NOT NULL")
+			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set InOut=" + no);	
+			
+		// Invoice from Order
+			
+		sql = new StringBuilder ("UPDATE I_InOut i ")
+		  .append("SET C_Invoice_ID=(SELECT MAX(C_Invoice_ID) FROM C_Invoice o")
+		  .append(" WHERE i.C_Order_ID=o.C_Order_ID AND i.AD_Client_ID=o.AD_Client_ID  AND i.AD_Org_ID=o.AD_Org_ID)")
+		  .append("WHERE C_Invoice_ID IS NULL AND C_Order_ID IS NOT NULL")
+		  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set InOut=" + no);	
+			
+		//InvoiceLine from header
+			
+		sql = new StringBuilder ("UPDATE I_InOut i ")
+		  .append("SET C_InvoiceLine_ID=(SELECT MAX(C_InvoiceLine_ID) FROM C_InvoiceLine ol")
+		  .append(" WHERE i.C_Invoice_ID=ol.C_Invoice_ID AND i.AD_Client_ID=ol.AD_Client_ID  ")
+		  .append(" AND i.M_Product_ID=ol.M_Product_ID) ")
+		  .append("WHERE C_InvoiceLine_ID IS NULL AND C_Invoice_ID IS NOT NULL AND M_Product_ID IS NOT NULL")
+		  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		   no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set M_InOutLine_ID=" + no);
+			
+		//end david castillo
+		
 		commitEx();
 		if (p_IsValidateOnly)
 		{
@@ -487,6 +537,10 @@ public class ImportInOut extends FTUProcess {
 					
 					if(imp.getMovementType() != null)
 						io.setMovementType(imp.getMovementType());
+					//saving new fields
+					if (imp.get_ValueAsInt("C_Invoice_ID")>0)
+						io.setC_Invoice_ID(imp.get_ValueAsInt("C_Invoice_ID"));
+					
 					
 					io.saveEx();
 					noInsert++;
@@ -519,6 +573,7 @@ public class ImportInOut extends FTUProcess {
 				
 				if(imp.getC_OrderLine_ID() != 0)
 					line.setC_OrderLine_ID(imp.getC_OrderLine_ID());
+						
 				
 				line.saveEx();
 				imp.setM_InOutLine_ID(line.getM_InOutLine_ID());

@@ -19,12 +19,15 @@ package net.frontuari.process;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.compiere.model.I_I_Payment;
 import org.compiere.model.MBankAccount;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MPayment;
+import org.compiere.model.MPaymentAllocate;
 import org.compiere.model.X_I_Payment;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
@@ -487,6 +490,41 @@ public class ImportPayment extends FTUProcess
 				log.warning ("Invalid CVC_CashFlowConceptValue=" + no);
 		}
 		
+		//Added by David Castillo 05/10/2022 added support for new fields
+		
+		//SetSalesRep 
+		sql = new StringBuilder ("UPDATE I_Payment o ")
+		  .append("SET SalesRep_ID=(SELECT AD_User_ID FROM AD_User c")
+		  .append(" WHERE o.SalesRep_Name=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
+		  .append("WHERE SalesRep_ID IS NULL AND SalesRep_Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set User1=" + no);
+		// Set proper error message
+		sql = new StringBuilder ("UPDATE I_Payment ")
+		  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found SalesRep_ID, ' ")
+		  .append("WHERE SalesRep_ID IS NULL AND SalesRep_Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+			log.warning("No SalesRep_ID=" + no);
+			
+			//Added by David Castillo 05/10/2022 added support for new fields
+			
+			//SetSalesRegion
+		sql = new StringBuilder ("UPDATE I_Payment o ")
+			.append("SET C_SalesRegion_ID=(SELECT C_SalesRegion_ID FROM C_SalesRegion c")
+			.append(" WHERE o.SalesRegionValue=c.Value AND o.AD_Client_ID=c.AD_Client_ID) ")
+			.append("WHERE C_SalesRegion_ID IS NULL AND SalesRegionValue IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set C_SalesRegion_ID=" + no);
+		// Set proper error message
+		sql = new StringBuilder ("UPDATE I_Payment ")
+		  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found SalesRep_ID, ' ")
+		  .append("WHERE C_SalesRegion_ID IS NULL AND SalesRegionValue IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+			log.warning("No C_SalesRegion_ID=" + no);
+			
+			
 		commitEx();
 		if (p_IsValidateOnly)
 		{
@@ -496,7 +534,8 @@ public class ImportPayment extends FTUProcess
 		//Import Bank Statement
 		sql = new StringBuilder("SELECT * FROM I_Payment")
 			.append(" WHERE I_IsImported='N'").append(clientCheck)
-			.append(" ORDER BY C_BankAccount_ID, CheckNo, DateTrx, R_AuthCode");
+			.append(" ORDER BY C_BPartner_ID, DocumentNo, DateTrx ");
+			//.append(" ORDER BY C_BankAccount_ID, CheckNo, DateTrx, R_AuthCode"); replaced order by 
 			
 		MBankAccount account = null;
 		PreparedStatement pstmt = null;
@@ -504,6 +543,11 @@ public class ImportPayment extends FTUProcess
 		int noInsert = 0;
 		try
 		{
+			String oldDocumentNo = "";
+			int oldC_BPartner_ID = 0;
+			Timestamp oldDate = new Timestamp(System.currentTimeMillis());
+			//payment, lineno
+			FTUMPayment payment = null;
 			pstmt = DB.prepareStatement(sql.toString(), get_TrxName());
 			rs = pstmt.executeQuery();
 				
@@ -517,125 +561,190 @@ public class ImportPayment extends FTUProcess
 					if (log.isLoggable(Level.INFO)) log.info("New Account=" + account.getAccountNo());
 				}
 				
-				//	New Payment
-				FTUMPayment payment = new FTUMPayment (m_ctx, 0, get_TrxName());
-				payment.setAD_Org_ID(imp.getAD_Org_ID());
-				payment.setDocumentNo(imp.get_ValueAsString("DocumentNo"));
-				payment.setPONum(imp.getPONum());
-				
-				//added by Adonis Castellanos
-				if(imp.get_ValueAsString("Description")!=null)
-					payment.setDescription(imp.get_ValueAsString("Description"));
-				
-				payment.setTrxType(imp.getTrxType());
-				payment.setTenderType(imp.getTenderType());
-				
-				payment.setC_BankAccount_ID(imp.getC_BankAccount_ID());
-				payment.setRoutingNo(imp.getRoutingNo());
-				payment.setAccountNo(imp.getAccountNo());
-				payment.setIBAN(imp.getIBAN());
-				payment.setSwiftCode(imp.getSwiftCode());
-				payment.setCheckNo(imp.getCheckNo());
-				payment.setMicr(imp.getMicr());
-				
-				//add by carlos vargas
-				payment.setC_Charge_ID(imp.getC_Charge_ID());
-				
-				if (imp.getCreditCardType() != null)
-					payment.setCreditCardType(imp.getCreditCardType());
-				payment.setCreditCardNumber(imp.getCreditCardNumber());
-				if (imp.getCreditCardExpMM() != 0)
-					payment.setCreditCardExpMM(imp.getCreditCardExpMM());
-				if (imp.getCreditCardExpYY() != 0)
-					payment.setCreditCardExpYY(imp.getCreditCardExpYY());
-				payment.setCreditCardVV(imp.getCreditCardVV());
-				payment.setSwipe(imp.getSwipe());
-				
-				payment.setDateAcct(imp.getDateAcct());
-				payment.setDateTrx(imp.getDateTrx());
-			//	payment.setDescription(imp.getDescription());
-				//
-				payment.setC_BPartner_ID(imp.getC_BPartner_ID());
-				payment.setC_Invoice_ID(imp.getC_Invoice_ID());
-				payment.setC_DocType_ID(imp.getC_DocType_ID());
-				payment.setC_Currency_ID(imp.getC_Currency_ID());
-				payment.setC_Charge_ID(imp.getC_Charge_ID());
-				payment.setChargeAmt(imp.getChargeAmt());
-				payment.setTaxAmt(imp.getTaxAmt());
-				
-				payment.setPayAmt(imp.getPayAmt());
-				payment.setWriteOffAmt(imp.getWriteOffAmt());
-				payment.setDiscountAmt(imp.getDiscountAmt());
-				payment.setWriteOffAmt(imp.getWriteOffAmt());
-				
-				//	Copy statement line reference data
-				payment.setA_City(imp.getA_City());
-				payment.setA_Country(imp.getA_Country());
-				payment.setA_EMail(imp.getA_EMail());
-				payment.setA_Ident_DL(imp.getA_Ident_DL());
-				payment.setA_Ident_SSN(imp.getA_Ident_SSN());
-				payment.setA_Name(imp.getA_Name());
-				payment.setA_State(imp.getA_State());
-				payment.setA_Street(imp.getA_Street());
-				payment.setA_Zip(imp.getA_Zip());
-				payment.setR_AuthCode(imp.getR_AuthCode());
-				payment.setR_Info(imp.getR_Info());
-				payment.setR_PnRef(imp.getR_PnRef());
-				payment.setR_RespMsg(imp.getR_RespMsg());
-				payment.setR_Result(imp.getR_Result());
-				payment.setOrig_TrxID(imp.getOrig_TrxID());
-				payment.setVoiceAuthCode(imp.getVoiceAuthCode());
-				
-				//	Added by Jorge Colmenarez, 2020-01-12 14:46 
-				//	Support for set IsAllocated and IsReconciled 
-				payment.setIsAllocated(imp.get_ValueAsBoolean("IsAllocated"));
-				payment.setIsReconciled(imp.get_ValueAsBoolean("IsReconciled"));
-				payment.setDescription(imp.get_ValueAsString("Description"));
-				//	End Jorge Colmenarez
-				// Added by Adonis Castellanos 21/10/2020
-				if(imp.get_ValueAsInt("C_ConversionType_ID")>0)
-				payment.setC_ConversionType_ID(imp.get_ValueAsInt("C_ConversionType_ID"));
+				if (oldC_BPartner_ID != imp.getC_BPartner_ID() 
+						|| oldDate.compareTo(imp.getDateTrx()) != 0
+						|| !oldDocumentNo.equals(imp.getDocumentNo())
+						|| !imp.get_ValueAsBoolean("isMultipleInvoice"))
+					{
+					
+					if (payment != null && m_docAction != null && m_docAction.length() > 0)
+					{
+						payment.setDocAction(m_docAction);
+							if(!payment.processIt (m_docAction)) {
+								log.warning("Payment Process Failed: " + payment + " - " + payment.getProcessMsg());
+								DB.close(rs, pstmt);
+								rs = null;
+								pstmt = null;
+								throw new IllegalStateException("Payment Process Failed: " + payment + " - " + payment.getProcessMsg());
+							
+								}
+						payment.setIsAllocated(imp.get_ValueAsBoolean("IsAllocated"));
+						payment.saveEx();
+					}
+//					New Payment
+					payment = new FTUMPayment (m_ctx, 0, get_TrxName());
+					payment.setAD_Org_ID(imp.getAD_Org_ID());
+					payment.setDocumentNo(imp.get_ValueAsString("DocumentNo"));
+					payment.setPONum(imp.getPONum());
+					
+					//added by Adonis Castellanos
+					if(imp.get_ValueAsString("Description")!=null)
+						payment.setDescription(imp.get_ValueAsString("Description"));
+					
+					payment.setTrxType(imp.getTrxType());
+					payment.setTenderType(imp.getTenderType());
+					
+					payment.setC_BankAccount_ID(imp.getC_BankAccount_ID());
+					payment.setRoutingNo(imp.getRoutingNo());
+					payment.setAccountNo(imp.getAccountNo());
+					payment.setIBAN(imp.getIBAN());
+					payment.setSwiftCode(imp.getSwiftCode());
+					payment.setCheckNo(imp.getCheckNo());
+					payment.setMicr(imp.getMicr());					
+					if (imp.getCreditCardType() != null)
+						payment.setCreditCardType(imp.getCreditCardType());
+					payment.setCreditCardNumber(imp.getCreditCardNumber());
+					if (imp.getCreditCardExpMM() != 0)
+						payment.setCreditCardExpMM(imp.getCreditCardExpMM());
+					if (imp.getCreditCardExpYY() != 0)
+						payment.setCreditCardExpYY(imp.getCreditCardExpYY());
+					payment.setCreditCardVV(imp.getCreditCardVV());
+					payment.setSwipe(imp.getSwipe());
+					
+					payment.setDateAcct(imp.getDateAcct());
+					payment.setDateTrx(imp.getDateTrx());
+				//	payment.setDescription(imp.getDescription());
+					//
+					
+					if (!imp.get_ValueAsBoolean("isMultipleInvoice")) {
+						payment.setC_Invoice_ID(imp.getC_Invoice_ID());
+						payment.setC_Charge_ID(imp.getC_Charge_ID());
+						payment.setChargeAmt(imp.getChargeAmt());
+						
+					}
+					payment.setC_BPartner_ID(imp.getC_BPartner_ID());
+					
+					payment.setC_DocType_ID(imp.getC_DocType_ID());
+					payment.setC_Currency_ID(imp.getC_Currency_ID());
 			
-				// End Adonis
-				//Added by David Castillo, 2021-02-23 
-				if (imp.get_Value("User1_ID") != null) {
-					payment.setUser1_ID(imp.get_ValueAsInt("User1_ID"));}
-				if (imp.get_Value("C_Activity_ID") != null) {
-					payment.set_ValueOfColumn("C_Activity_ID", imp.get_ValueAsInt("C_Activity_ID"));}
-				//End David
-				//	Added by Jorge Colmenarez, 2021-05-17 15:20
-				if(imp.get_ValueAsInt("AD_OrgTrx_ID") > 0)
-					payment.setAD_OrgTrx_ID(imp.get_ValueAsInt("AD_OrgTrx_ID"));
-				//	End Jorge Colmenarez
-				//David Castillo CVC_CashFlowConcept_ID Validation
-				if (imp.get_ColumnIndex("CVC_CashFlowConcept_ID") != -1) {
-					if (imp.get_ValueAsInt("CVC_CashFlowConcept_ID")>0)
-						payment.set_ValueOfColumn("CVC_CashFlowConcept_ID", imp.get_ValueAsInt("CVC_CashFlowConcept_ID"));
-				}
-				//	Save payment
-				if (payment.save())
-				{
+			
+					payment.setTaxAmt(imp.getTaxAmt());
+					
+					payment.setPayAmt(imp.getPayAmt());
+					payment.setWriteOffAmt(imp.getWriteOffAmt());
+					payment.setDiscountAmt(imp.getDiscountAmt());
+					payment.setWriteOffAmt(imp.getWriteOffAmt());
+					
+					//	Copy statement line reference data
+					payment.setA_City(imp.getA_City());
+					payment.setA_Country(imp.getA_Country());
+					payment.setA_EMail(imp.getA_EMail());
+					payment.setA_Ident_DL(imp.getA_Ident_DL());
+					payment.setA_Ident_SSN(imp.getA_Ident_SSN());
+					payment.setA_Name(imp.getA_Name());
+					payment.setA_State(imp.getA_State());
+					payment.setA_Street(imp.getA_Street());
+					payment.setA_Zip(imp.getA_Zip());
+					payment.setR_AuthCode(imp.getR_AuthCode());
+					payment.setR_Info(imp.getR_Info());
+					payment.setR_PnRef(imp.getR_PnRef());
+					payment.setR_RespMsg(imp.getR_RespMsg());
+					payment.setR_Result(imp.getR_Result());
+					payment.setOrig_TrxID(imp.getOrig_TrxID());
+					payment.setVoiceAuthCode(imp.getVoiceAuthCode());
+					
+					//	Added by Jorge Colmenarez, 2020-01-12 14:46 
+					//	Support for set IsAllocated and IsReconciled 
+					payment.setIsAllocated(imp.get_ValueAsBoolean("IsAllocated"));
+					payment.setIsReconciled(imp.get_ValueAsBoolean("IsReconciled"));
+					payment.setDescription(imp.get_ValueAsString("Description"));
+					//	End Jorge Colmenarez
+					// Added by Adonis Castellanos 21/10/2020
+					if(imp.get_ValueAsInt("C_ConversionType_ID")>0)
+					payment.setC_ConversionType_ID(imp.get_ValueAsInt("C_ConversionType_ID"));
+				
+					// End Adonis
+					//Added by David Castillo, 2021-02-23 
+					if (imp.get_Value("User1_ID") != null) {
+						payment.setUser1_ID(imp.get_ValueAsInt("User1_ID"));}
+					if (imp.get_Value("C_Activity_ID") != null) {
+						payment.set_ValueOfColumn("C_Activity_ID", imp.get_ValueAsInt("C_Activity_ID"));}
+					//End David
+					//	Added by Jorge Colmenarez, 2021-05-17 15:20
+					if(imp.get_ValueAsInt("AD_OrgTrx_ID") > 0)
+						payment.setAD_OrgTrx_ID(imp.get_ValueAsInt("AD_OrgTrx_ID"));
+					//	End Jorge Colmenarez
+					//David Castillo CVC_CashFlowConcept_ID Validation
+					if (imp.get_ColumnIndex("CVC_CashFlowConcept_ID") != -1) {
+						if (imp.get_ValueAsInt("CVC_CashFlowConcept_ID")>0)
+							payment.set_ValueOfColumn("CVC_CashFlowConcept_ID", imp.get_ValueAsInt("CVC_CashFlowConcept_ID"));
+					}
+					
+					//save new fields 05/10/2022
+					if (imp.get_ValueAsInt("C_SalesRegion_ID")>0)
+						payment.set_ValueOfColumn("C_SalesRegion_ID", imp.get_ValueAsInt("C_SalesRegion_ID"));
+					
+					if (imp.get_ValueAsInt("SalesRep_ID")>0)
+						payment.set_ValueOfColumn("SalesRep_ID", imp.get_ValueAsInt("SalesRep_ID"));
+					
+					//	Save payment
+					if (payment.save()) {
+
+						
+						if (imp.get_ValueAsBoolean("isMultipleInvoice")) {
+							
+							MPaymentAllocate alloc = new MPaymentAllocate(getCtx(), 0, get_TrxName());
+							MInvoice inv = new MInvoice(getCtx(), imp.getC_Invoice_ID(), get_TrxName());
+							
+							alloc.setAD_Org_ID(payment.getAD_Org_ID());
+							alloc.setC_Payment_ID(payment.getC_Payment_ID());
+							alloc.setAmount(imp.getWriteOffAmt());
+							alloc.setC_Invoice_ID(imp.getC_Invoice_ID());
+							alloc.setInvoiceAmt(inv.getGrandTotal());
+							alloc.saveEx();
+							
+							imp.setC_Payment_ID(payment.getC_Payment_ID());
+							imp.setI_IsImported(true);
+							imp.setProcessed(true);
+							imp.saveEx();
+							noInsert++;	
+						}else {
+
+						imp.setC_Payment_ID(payment.getC_Payment_ID());
+						imp.setI_IsImported(true);
+						imp.setProcessed(true);
+						imp.saveEx();
+						noInsert++;	
+					
+						}
+					}
+					
+						
+						//	Group Change
+					oldDocumentNo = payment.getDocumentNo();
+					oldDate = payment.getDateTrx();
+					oldC_BPartner_ID = payment.getC_BPartner_ID();
+							
+					}else {
+			
+					MPaymentAllocate alloc = new MPaymentAllocate(getCtx(), 0, get_TrxName());
+					MInvoice inv = new MInvoice(getCtx(), imp.getC_Invoice_ID(), get_TrxName());
+					
+					alloc.setAD_Org_ID(payment.getAD_Org_ID());
+					alloc.setC_Payment_ID(payment.getC_Payment_ID());
+					alloc.setAmount(imp.getWriteOffAmt());
+					alloc.setC_Invoice_ID(imp.getC_Invoice_ID());
+					alloc.setInvoiceAmt(inv.getGrandTotal());
+					alloc.saveEx();
+					
 					imp.setC_Payment_ID(payment.getC_Payment_ID());
 					imp.setI_IsImported(true);
 					imp.setProcessed(true);
 					imp.saveEx();
 					noInsert++;
-
-					if (payment != null && m_docAction != null && m_docAction.length() > 0)
-					{
-						payment.setDocAction(m_docAction);
-						if(!payment.processIt (m_docAction)) {
-							log.warning("Payment Process Failed: " + payment + " - " + payment.getProcessMsg());
-							DB.close(rs, pstmt);
-							rs = null;
-							pstmt = null;
-							throw new IllegalStateException("Payment Process Failed: " + payment + " - " + payment.getProcessMsg());
-							
-						}
-						payment.setIsAllocated(imp.get_ValueAsBoolean("IsAllocated"));
-						payment.saveEx();
+					
 					}
-				}
+				
 				
 			}
 		}
@@ -660,5 +769,13 @@ public class ImportPayment extends FTUProcess
 		addLog (0, null, new BigDecimal (noInsert), "@C_Payment_ID@: @Inserted@");
 		return "";
 	}	//	doIt
+	
+	private BigDecimal getAccumAmt(int Payment_ID) {
+		BigDecimal amt = Env.ZERO;
+		
+		amt = DB.getSQLValueBD(get_TrxName(), "SELECT COALESCE(SUM(Amount),0) amt FROM C_PaymentAllocate WHERE C_Payment_ID = "  + Payment_ID);
+		
+		return amt;
+	}
 	
 }	//	ImportPayment

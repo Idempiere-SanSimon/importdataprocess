@@ -656,8 +656,8 @@ public class ImportInvoice extends FTUProcess
 			
 		sql = new StringBuilder ("UPDATE I_Invoice i ")
 		  .append("SET M_InOut_ID=(SELECT MAX(M_InOut_ID) FROM M_InOut o")
-		  .append(" WHERE i.C_Order_ID=o.C_Order_ID AND i.AD_Client_ID=o.AD_Client_ID  AND i.AD_Org_ID=o.AD_Org_ID)")
-		  .append("WHERE M_InOut_ID IS NULL AND C_Order_ID IS NOT NULL")
+		  .append(" WHERE i.InOutDocumentNo=o.DocumentNo AND i.AD_Client_ID=o.AD_Client_ID  AND i.AD_Org_ID=o.AD_Org_ID)")
+		  .append("WHERE M_InOut_ID IS NULL AND InOutDocumentNo IS NOT NULL")
 		  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set InOut=" + no);	
