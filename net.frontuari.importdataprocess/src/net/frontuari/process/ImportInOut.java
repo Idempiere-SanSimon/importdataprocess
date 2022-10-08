@@ -23,6 +23,8 @@ import java.util.logging.Level;
 
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
+import org.compiere.model.MInvoice;
+import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MOrder;
 
 import net.frontuari.base.FTUProcess;
@@ -506,6 +508,17 @@ public class ImportInOut extends FTUProcess {
 					if (imp.getDescription() != null)
 						io.setDescription(imp.getDescription());
 					io.setM_Warehouse_ID(imp.getM_Warehouse_ID());
+					
+					//	GetOrder from Invoice
+					if(imp.get_ValueAsInt("C_Invoice_ID") > 0)
+					{
+						MInvoice inv = new MInvoice(getCtx(), imp.get_ValueAsInt("C_Invoice_ID"), get_TrxName());
+						if(imp.getC_Order_ID()==0) {
+							imp.setC_Order_ID(inv.getC_Order_ID());
+							imp.saveEx();
+						}
+					}
+					
 					//	Order
 					if(imp.getC_Order_ID() != 0)
 					{
@@ -541,7 +554,6 @@ public class ImportInOut extends FTUProcess {
 					if (imp.get_ValueAsInt("C_Invoice_ID")>0)
 						io.setC_Invoice_ID(imp.get_ValueAsInt("C_Invoice_ID"));
 					
-					
 					io.saveEx();
 					noInsert++;
 					lineNo = 10;
@@ -571,11 +583,28 @@ public class ImportInOut extends FTUProcess {
 				if (imp.getC_Project_ID() != 0)
 					line.setC_Project_ID(imp.getC_Project_ID());
 				
+				//	GetOrderLine from InvoiceLine
+				if(imp.get_ValueAsInt("C_InvoiceLine_ID") > 0)
+				{
+					MInvoiceLine invline = new MInvoiceLine(getCtx(), imp.get_ValueAsInt("C_InvoiceLine_ID"), get_TrxName());
+					if(imp.getC_OrderLine_ID()==0) {
+						imp.setC_OrderLine_ID(invline.getC_OrderLine_ID());
+						imp.saveEx();
+					}
+				}
+				
 				if(imp.getC_OrderLine_ID() != 0)
 					line.setC_OrderLine_ID(imp.getC_OrderLine_ID());
 						
-				
 				line.saveEx();
+				
+				//	GetOrderLine from InvoiceLine
+				if(imp.get_ValueAsInt("C_InvoiceLine_ID") > 0)
+				{
+					MInvoiceLine invline = new MInvoiceLine(getCtx(), imp.get_ValueAsInt("C_InvoiceLine_ID"), get_TrxName());
+					invline.setM_InOutLine_ID(line.get_ID());
+				}
+				
 				imp.setM_InOutLine_ID(line.getM_InOutLine_ID());
 				imp.setI_IsImported(true);
 				imp.setProcessed(true);

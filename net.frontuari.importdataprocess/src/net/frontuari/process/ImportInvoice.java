@@ -25,6 +25,8 @@ import java.util.logging.Level;
 
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
+import org.compiere.model.MInOut;
+import org.compiere.model.MInOutLine;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MLocation;
@@ -921,6 +923,17 @@ public class ImportInvoice extends FTUProcess
 					int C_ConversionType_ID = imp.get_ValueAsInt("C_ConversionType_ID");
 					if(C_ConversionType_ID>0)
 						invoice.setC_ConversionType_ID(C_ConversionType_ID);
+					
+					//	Add Order to Invoice
+					if(imp.get_ValueAsInt("M_InOut_ID") > 0 && imp.get_ValueAsInt("C_Order_ID") == 0)
+					{
+						MInOut io = new MInOut(getCtx(), imp.get_ValueAsInt("M_InOut_ID"), get_TrxName());
+						imp.set_ValueOfColumn("C_Order_ID", io.getC_Order_ID());
+						imp.saveEx();
+					}
+					if(imp.get_ValueAsInt("C_Order_ID") > 0)
+						invoice.setC_Order_ID(imp.get_ValueAsInt("C_Order_ID"));
+					
 					//
 					invoice.saveEx();
 					noInsert++;
@@ -962,6 +975,17 @@ public class ImportInvoice extends FTUProcess
 				if (taxAmt != null && Env.ZERO.compareTo(taxAmt) != 0)
 					line.setTaxAmt(taxAmt);
 				line.setC_1099Box_ID(imp.getC_1099Box_ID());
+				//	Set Order and InOut
+				if(imp.get_ValueAsInt("M_InOutLine_ID") > 0 && imp.get_ValueAsInt("C_OrderLine_ID") == 0)
+				{
+					MInOutLine iol = new MInOutLine(getCtx(), imp.get_ValueAsInt("M_InOutLine_ID"), get_TrxName());
+					imp.set_ValueOfColumn("C_OrderLine_ID", iol.getC_OrderLine_ID());
+					imp.saveEx();
+					line.setM_InOutLine_ID(iol.get_ID());
+				}
+				if(imp.get_ValueAsInt("C_OrderLine_ID") > 0)
+					line.setC_OrderLine_ID(imp.get_ValueAsInt("C_OrderLine_ID"));
+				
 				line.saveEx();
 				//
 				imp.setC_InvoiceLine_ID(line.getC_InvoiceLine_ID());
