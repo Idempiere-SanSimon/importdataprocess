@@ -976,7 +976,7 @@ public class ImportInvoice extends FTUProcess
 					line.setTaxAmt(taxAmt);
 				line.setC_1099Box_ID(imp.getC_1099Box_ID());
 				//	Set Order and InOut
-				if(imp.get_ValueAsInt("M_InOutLine_ID") > 0 && imp.get_ValueAsInt("C_OrderLine_ID") == 0)
+				if(imp.get_ValueAsInt("M_InOutLine_ID") > 0)
 				{
 					MInOutLine iol = new MInOutLine(getCtx(), imp.get_ValueAsInt("M_InOutLine_ID"), get_TrxName());
 					imp.set_ValueOfColumn("C_OrderLine_ID", iol.getC_OrderLine_ID());
