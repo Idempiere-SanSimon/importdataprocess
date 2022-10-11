@@ -555,6 +555,7 @@ public class ImportPayment extends FTUProcess
 			{ 
 				X_I_Payment imp = new X_I_Payment(m_ctx, rs, get_TrxName());
 				//	Get the bank account
+				BigDecimal invoiceAmt = new BigDecimal (imp.get_ValueAsString("Amount"));
 				if (account == null || account.getC_BankAccount_ID() != imp.getC_BankAccount_ID())
 				{
 					account = MBankAccount.get (m_ctx, imp.getC_BankAccount_ID());
@@ -698,7 +699,7 @@ public class ImportPayment extends FTUProcess
 							
 							alloc.setAD_Org_ID(payment.getAD_Org_ID());
 							alloc.setC_Payment_ID(payment.getC_Payment_ID());
-							alloc.setAmount(imp.getWriteOffAmt());
+							alloc.setAmount(invoiceAmt);
 							alloc.setC_Invoice_ID(imp.getC_Invoice_ID());
 							alloc.setInvoiceAmt(inv.getGrandTotal());
 							alloc.saveEx();
@@ -732,7 +733,7 @@ public class ImportPayment extends FTUProcess
 					
 					alloc.setAD_Org_ID(payment.getAD_Org_ID());
 					alloc.setC_Payment_ID(payment.getC_Payment_ID());
-					alloc.setAmount(imp.getWriteOffAmt());
+					alloc.setAmount(invoiceAmt);
 					alloc.setC_Invoice_ID(imp.getC_Invoice_ID());
 					alloc.setInvoiceAmt(inv.getGrandTotal());
 					alloc.saveEx();
@@ -746,6 +747,20 @@ public class ImportPayment extends FTUProcess
 					}
 				
 				
+			}
+			if (payment != null && m_docAction != null && m_docAction.length() > 0)
+			{
+				payment.setDocAction(m_docAction);
+					if(!payment.processIt (m_docAction)) {
+						log.warning("Payment Process Failed: " + payment + " - " + payment.getProcessMsg());
+						DB.close(rs, pstmt);
+						rs = null;
+						pstmt = null;
+						throw new IllegalStateException("Payment Process Failed: " + payment + " - " + payment.getProcessMsg());
+					
+						}
+						
+				payment.saveEx();
 			}
 		}
 		catch(Exception e)
