@@ -555,7 +555,7 @@ public class ImportPayment extends FTUProcess
 			{ 
 				X_I_Payment imp = new X_I_Payment(m_ctx, rs, get_TrxName());
 				//	Get the bank account
-				BigDecimal invoiceAmt = new BigDecimal (imp.get_ValueAsString("Amount"));
+				BigDecimal invoiceAmt = (BigDecimal) imp.get_Value("Amount");
 				if (account == null || account.getC_BankAccount_ID() != imp.getC_BankAccount_ID())
 				{
 					account = MBankAccount.get (m_ctx, imp.getC_BankAccount_ID());
