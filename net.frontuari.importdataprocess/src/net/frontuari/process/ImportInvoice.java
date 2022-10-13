@@ -242,7 +242,21 @@ public class ImportInvoice extends FTUProcess
 		if (log.isLoggable(Level.FINE)) log.fine("Set IsSOTrx=N=" + no);
 
 		//	Price List
-		/*sql = new StringBuilder ("UPDATE I_Invoice o ")
+		//PriceList By Name
+		sql = new StringBuilder ("UPDATE I_Invoice o ")
+		 .append("SET M_PriceList_ID=(SELECT M_PriceList_ID FROM M_PriceList c")
+		 .append(" WHERE o.PriceListName=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
+		 .append("WHERE M_PriceList_ID IS NULL AND PriceListName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set User1=" + no);
+		// Set proper error message
+	/*	sql = new StringBuilder ("UPDATE I_Invoice ")
+		 .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found M_PriceList_ID, ' ")
+		 .append("WHERE M_PriceList_ID IS NULL AND PriceListName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+		log.warning("No M_PriceList_ID=" + no);*/
+		sql = new StringBuilder ("UPDATE I_Invoice o ")
 			  .append("SET M_PriceList_ID=(SELECT MAX(M_PriceList_ID) FROM M_PriceList p WHERE p.IsDefault='Y'")
 			  .append(" AND p.C_Currency_ID=o.C_Currency_ID AND p.IsSOPriceList=o.IsSOTrx AND o.AD_Client_ID=p.AD_Client_ID) ")
 			  .append("WHERE M_PriceList_ID IS NULL AND I_IsImported<>'Y'").append (clientCheck);
@@ -273,7 +287,7 @@ public class ImportInvoice extends FTUProcess
 			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
-			log.warning("No PriceList=" + no);*/
+			log.warning("No PriceList=" + no);
 
 		//	Payment Term
 		sql = new StringBuilder ("UPDATE I_Invoice o ")
@@ -377,7 +391,17 @@ public class ImportInvoice extends FTUProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set Default BP=" + no);
 
-		/*//	Existing Location ? Exact Match
+		
+		
+		//BP Location By Name
+		sql = new StringBuilder ("UPDATE I_Invoice o ")
+		  .append("SET C_BPartner_Location_ID=(SELECT C_BPartner_Location_ID FROM C_BPartner_Location c")
+		  .append(" WHERE o.bp_location_name=c.Name AND o.AD_Client_ID=c.AD_Client_ID AND o.C_BPartner_ID = c.C_BPartner_ID) ")
+		  .append("WHERE C_BPartner_Location_ID IS NULL AND bp_location_name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set C_BPartner_Location_ID=" + no);
+		
+		//	Existing Location ? Exact Match
 		sql = new StringBuilder ("UPDATE I_Invoice o ")
 			  .append("SET C_BPartner_Location_ID=(SELECT C_BPartner_Location_ID")
 			  .append(" FROM C_BPartner_Location bpl INNER JOIN C_Location l ON (bpl.C_Location_ID=l.C_Location_ID)")
@@ -406,7 +430,7 @@ public class ImportInvoice extends FTUProcess
 			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
-			log.warning ("No BP Location=" + no);*/
+			log.warning ("No BP Location=" + no);
 
 		//	Set Country
 		/**
@@ -503,7 +527,24 @@ public class ImportInvoice extends FTUProcess
 			log.warning ("Invalid Product and Charge exclusive=" + no);
 
 			//	Tax
-		/*sql = new StringBuilder ("UPDATE I_Invoice o ")
+		
+		
+				//Tax By Name
+		sql = new StringBuilder ("UPDATE I_Invoice o ")
+				.append("SET C_Tax_ID=(SELECT C_Tax_ID FROM C_Tax c")
+				.append(" WHERE o.TaxName=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
+				.append("WHERE C_Tax_ID IS NULL AND TaxName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set TaxName=" + no);
+				// Set proper error message
+				/*sql = new StringBuilder ("UPDATE I_Invoice ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found C_Tax_ID, ' ")
+				.append("WHERE C_Tax_ID IS NULL AND TaxName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+				log.warning("No C_Tax_ID=" + no);*/
+
+		sql = new StringBuilder ("UPDATE I_Invoice o ")
 			  .append("SET C_Tax_ID=(SELECT MAX(C_Tax_ID) FROM C_Tax t")
 			  .append(" WHERE o.TaxIndicator=t.TaxIndicator AND o.AD_Client_ID=t.AD_Client_ID) ")
 			  .append("WHERE C_Tax_ID IS NULL AND TaxIndicator IS NOT NULL")
@@ -516,7 +557,7 @@ public class ImportInvoice extends FTUProcess
 			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
-			log.warning ("Invalid Tax=" + no);*/
+			log.warning ("Invalid Tax=" + no);
 		
 		// Set 1099 Box
 		sql = new StringBuilder ("UPDATE I_Invoice o ")
@@ -582,50 +623,10 @@ public class ImportInvoice extends FTUProcess
 				if (no != 0)
 				log.warning("No SalesRep_ID=" + no);
 						
-			//PriceList By Name
-			sql = new StringBuilder ("UPDATE I_Invoice o ")
-			 .append("SET M_PriceList_ID=(SELECT M_PriceList_ID FROM M_PriceList c")
-			 .append(" WHERE o.PriceListName=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
-			 .append("WHERE M_PriceList_ID IS NULL AND PriceListName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Set User1=" + no);
-			// Set proper error message
-			sql = new StringBuilder ("UPDATE I_Invoice ")
-			 .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found M_PriceList_ID, ' ")
-			 .append("WHERE M_PriceList_ID IS NULL AND PriceListName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-				if (no != 0)
-			log.warning("No M_PriceList_ID=" + no);
+			
 							
-			//BO Location By Name
-			sql = new StringBuilder ("UPDATE I_Invoice o ")
-			  .append("SET C_BPartner_Location_ID=(SELECT C_BPartner_Location_ID FROM C_BPartner_Location c")
-			  .append(" WHERE o.bp_location_name=c.Name AND o.AD_Client_ID=c.AD_Client_ID AND o.C_BPartner_ID = c.C_BPartner_ID) ")
-			  .append("WHERE C_BPartner_Location_ID IS NULL AND bp_location_name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Set User1=" + no);
-			// Set proper error message
-			sql = new StringBuilder ("UPDATE I_Invoice ")
-			  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found C_BPartner_Location_ID, ' ")
-			  .append("WHERE C_BPartner_Location_ID IS NULL AND bp_location_name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-				if (no != 0)
-			log.warning("No C_BPartner_Location_ID=" + no);
-								
-			//Tax By Name
-			sql = new StringBuilder ("UPDATE I_Invoice o ")
-			  .append("SET C_Tax_ID=(SELECT C_Tax_ID FROM C_Tax c")
-			  .append(" WHERE o.TaxName=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
-			  .append("WHERE C_Tax_ID IS NULL AND TaxName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Set TaxName=" + no);
-			// Set proper error message
-			sql = new StringBuilder ("UPDATE I_Invoice ")
-			  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found C_Tax_ID, ' ")
-			  .append("WHERE C_Tax_ID IS NULL AND TaxName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-				if (no != 0)
-			log.warning("No C_Tax_ID=" + no);
+		
+
 				
 			//C_Order_ID
 		sql = new StringBuilder ("UPDATE I_Invoice i ")
@@ -674,6 +675,24 @@ public class ImportInvoice extends FTUProcess
 	  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 	   no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set M_InOutLine_ID=" + no);
+		
+		//InvoiceAffected
+		sql = new StringBuilder ("UPDATE I_Invoice i ")
+		  .append("SET LVE_invoiceAffected_ID=(SELECT MAX(C_Invoice_ID) FROM C_Invoice o")
+		  .append(" WHERE i.InvoiceAffectedDocumentNo=o.DocumentNo AND i.AD_Client_ID=o.AD_Client_ID AND i.AD_Org_ID = o.AD_Org_ID) ")
+		  .append("WHERE LVE_invoiceAffected_ID IS NULL AND InvoiceAffectedDocumentNo IS NOT NULL")
+		  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set Invoice Affected =" + no);	
+			
+		sql = new StringBuilder ("UPDATE I_Invoice ")	// No DocType
+		  .append("SET I_IsImported='N', I_ErrorMsg=I_ErrorMsg||'ERR=No Invoice Affected, ' ")
+		  .append("WHERE LVE_invoiceAffected_ID IS NULL AND InvoiceAffectedDocumentNo IS NOT NULL")
+		  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+			log.warning ("No Invoice Affected=" + no);
+			
 		
 		commitEx();
 		
@@ -885,6 +904,10 @@ public class ImportInvoice extends FTUProcess
 					if(imp.get_ValueAsString("LVE_controlNumber") != "")
 					{
 						invoice.set_ValueOfColumn("LVE_controlNumber", imp.get_ValueAsString("LVE_controlNumber"));
+					}
+					// added by david castillo , 13/10/2022
+					if(imp.get_ValueAsInt("LVE_invoiceAffected_ID") > 0) {
+						invoice.set_ValueOfColumn("LVE_invoiceAffected_ID", imp.get_ValueAsInt("LVE_invoiceAffected_ID"));
 					}
 					//
 					invoice.setC_BPartner_ID(imp.getC_BPartner_ID());
