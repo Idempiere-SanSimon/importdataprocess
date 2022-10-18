@@ -951,8 +951,10 @@ public class ImportInvoice extends FTUProcess
 					if(imp.get_ValueAsInt("M_InOut_ID") > 0 && imp.get_ValueAsInt("C_Order_ID") == 0)
 					{
 						MInOut io = new MInOut(getCtx(), imp.get_ValueAsInt("M_InOut_ID"), get_TrxName());
+						if (io.getC_Order_ID() > 0) {
 						imp.set_ValueOfColumn("C_Order_ID", io.getC_Order_ID());
 						imp.saveEx();
+						}
 					}
 					if(imp.get_ValueAsInt("C_Order_ID") > 0)
 						invoice.setC_Order_ID(imp.get_ValueAsInt("C_Order_ID"));

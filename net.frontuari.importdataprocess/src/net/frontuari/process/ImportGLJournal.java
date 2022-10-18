@@ -493,13 +493,13 @@ public class ImportGLJournal extends FTUProcess
 			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set Activity from Value=" + no);
-	/*	sql = new StringBuilder ("UPDATE I_GLJournal i ")
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Activity, '")
 			.append("WHERE C_Activity_ID IS NULL AND ActivityValue IS NOT NULL")
 			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
-			log.warning ("Invalid Activity=" + no);*/
+			log.warning ("Invalid Activity=" + no);
 		
 		// Set User1_ID David Castillo
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
@@ -516,6 +516,13 @@ public class ImportGLJournal extends FTUProcess
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (no != 0)
 				log.warning ("Invalid User1=" + no);*/
+			sql = new StringBuilder ("UPDATE I_GLJournal i ")
+					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid User1_ID Does not belong to Activity, '")
+					.append("WHERE User1_ID NOT IN (SELECT User1_ID FROM FTU_Activity_User1_Access a WHERE a.C_Activity_ID = i.C_Activity_ID) ")
+					.append(" AND I_IsImported<>'Y' AND User1_ID IS NOT NULL ").append (clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+					log.warning ("Invalid User1_ID=" + no);
 
 
 		//	Set SalesRegion
