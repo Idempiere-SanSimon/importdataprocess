@@ -374,7 +374,7 @@ public class ImportInventory extends FTUProcess implements ImportProcess
 		sql = new StringBuilder ("UPDATE I_Inventory i ")
 			.append("SET AD_Org_ID=COALESCE((SELECT d.AD_Org_ID FROM AD_Org d")
 			.append(" WHERE d.Value=i.OrgValue AND  i.AD_Client_ID=d.AD_Client_ID)," + p_AD_Org_ID+ ")")
-			.append(" OrgValue IS NOT NULL")
+			.append(" WHERE OrgValue IS NOT NULL")
 			.append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set AD_Org_ID=" + no);
