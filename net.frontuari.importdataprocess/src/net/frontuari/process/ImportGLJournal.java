@@ -28,6 +28,7 @@ import org.compiere.model.MAccount;
 import org.compiere.model.MJournal;
 import org.compiere.model.MJournalBatch;
 import org.compiere.model.MJournalLine;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.X_I_GLJournal;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.CLogger;
@@ -701,7 +702,39 @@ public class ImportGLJournal extends FTUProcess
 			//
 			while (rs.next())
 			{
+				
 				X_I_GLJournal imp = new X_I_GLJournal (getCtx (), rs, get_TrxName());
+			
+				/** added by david castillo 24/10/2022 verify initial accountNo characters with user1access characters*/
+				
+				if (MSysConfig.getBooleanValue("checkInitialAccountNo", false, getAD_Client_ID())) {
+					
+					boolean validAcc = false;
+					String values = DB.getSQLValueString(get_TrxName(), "SELECT AccountValue FROM FTU_Activity_User1_Access WHERE "
+					+ " C_Activity_ID = ? AND User1_ID = ? ", imp.getC_Activity_ID(), imp.getUser1_ID());
+					
+					if (values != null) {
+					String [] numbers = values.split(",");
+					String initialNo = imp.getAccountValue().substring(0, 2);
+					
+						if (numbers.length > 0)
+						for (String noAcc : numbers) {
+						//	log.log(Level.SEVERE, noAcc);
+						//	log.log(Level.SEVERE, initialNo);
+								if (noAcc.equals(initialNo)) {
+										validAcc = true;
+										imp.setI_ErrorMsg(null);
+										imp.saveEx();
+								}
+						}
+					}
+					
+					if (!validAcc) {
+						imp.setI_ErrorMsg(imp.getI_ErrorMsg() + " Números iniciales de la cuenta inválidos");
+						imp.saveEx();
+						continue;
+					}
+				}
 				int Doc_BPartner_ID =0;// rs.getInt("Doc_BPartner_ID");
 				//	New Batch if Batch Document No changes
 				String impBatchDocumentNo = imp.getBatchDocumentNo();
