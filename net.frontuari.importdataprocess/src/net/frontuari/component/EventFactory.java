@@ -18,7 +18,11 @@
 
 package net.frontuari.component;
 
+import org.adempiere.base.event.IEventTopics;
+import org.compiere.model.MJournalLine;
+
 import net.frontuari.base.FTUEventFactory;
+import net.frontuari.events.FTUImportDataProcessEvents;
 
 /**
  * Event Factory
@@ -36,6 +40,8 @@ public class EventFactory extends FTUEventFactory {
 	 */
 	@Override
 	protected void initialize() {
+		registerEvent(IEventTopics.PO_BEFORE_NEW, MJournalLine.Table_Name, FTUImportDataProcessEvents.class);
+		registerEvent(IEventTopics.PO_BEFORE_CHANGE, MJournalLine.Table_Name, FTUImportDataProcessEvents.class);
 	}
 
 }
