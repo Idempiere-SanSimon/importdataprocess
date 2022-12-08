@@ -142,6 +142,7 @@ public class ImportGLJournal extends FTUProcess
 		if (log.isLoggable(Level.FINE)) log.fine("Set Client from Value=" + no);
 
 		//	Set Default Client, Doc Org, AcctSchema, DatAcct
+		
 		sql = new StringBuilder ("UPDATE I_GLJournal ")
 			  .append("SET AD_Client_ID = COALESCE (AD_Client_ID,").append (m_AD_Client_ID).append ("),")
 			  .append(" AD_OrgDoc_ID = COALESCE (AD_OrgDoc_ID,").append (m_AD_Org_ID).append ("),");
@@ -323,56 +324,6 @@ public class ImportGLJournal extends FTUProcess
 		if (no != 0)
 			log.warning ("No Rate=" + no);
 
-		//	Set Period
-		sql = new StringBuilder ("UPDATE I_GLJournal i ")
-			.append("SET C_Period_ID=(SELECT MAX(p.C_Period_ID) FROM C_Period p")
-			.append(" INNER JOIN C_Year y ON (y.C_Year_ID=p.C_Year_ID)")
-			.append(" INNER JOIN AD_ClientInfo c ON (c.C_Calendar_ID=y.C_Calendar_ID)")
-			.append(" WHERE c.AD_Client_ID=i.AD_Client_ID")
-			// globalqss - cruiz - Bug [ 1577712 ] Financial Period Bug
-			.append(" AND i.DateAcct BETWEEN p.StartDate AND p.EndDate AND p.IsActive='Y' AND p.PeriodType='S') ")
-			.append("WHERE C_Period_ID IS NULL")
-			.append(" AND I_IsImported<>'Y'").append (clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (log.isLoggable(Level.FINE)) log.fine("Set Period=" + no);
-		sql = new StringBuilder ("UPDATE I_GLJournal i ")
-			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Period, '")
-			.append("WHERE C_Period_ID IS NULL OR C_Period_ID NOT IN")
-			.append("(SELECT C_Period_ID FROM C_Period p")
-			.append(" INNER JOIN C_Year y ON (y.C_Year_ID=p.C_Year_ID)")
-			.append(" INNER JOIN AD_ClientInfo c ON (c.C_Calendar_ID=y.C_Calendar_ID) ")
-			.append(" WHERE c.AD_Client_ID=i.AD_Client_ID")
-			// globalqss - cruiz - Bug [ 1577712 ] Financial Period Bug
-			.append(" AND i.DateAcct BETWEEN p.StartDate AND p.EndDate AND p.IsActive='Y' AND p.PeriodType='S')")
-			.append(" AND I_IsImported<>'Y'").append (clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (no != 0)
-			log.warning ("Invalid Period=" + no);
-		sql = new StringBuilder ("UPDATE I_GLJournal i ")
-			.append("SET I_ErrorMsg=I_ErrorMsg||'WARN=Period Closed, ' ")
-			.append("WHERE C_Period_ID IS NOT NULL AND NOT EXISTS")
-			.append(" (SELECT * FROM C_PeriodControl pc WHERE pc.C_Period_ID=i.C_Period_ID AND DocBaseType='GLJ' AND PeriodStatus='O') ")
-			.append(" AND I_IsImported<>'Y'").append (clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (no != 0)
-			log.warning ("Period Closed=" + no);
-
-		//	Posting Type
-		sql = new StringBuilder ("UPDATE I_GLJournal i ")
-			.append("SET PostingType='A' ")
-			.append("WHERE PostingType IS NULL AND I_IsImported<>'Y'").append (clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (log.isLoggable(Level.FINE)) log.fine("Set Actual PostingType=" + no);
-		sql = new StringBuilder ("UPDATE I_GLJournal i ")
-			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid PostingType, ' ")
-			.append("WHERE PostingType IS NULL OR NOT EXISTS")
-			.append(" (SELECT * FROM AD_Ref_List r WHERE r.AD_Reference_ID=125 AND i.PostingType=r.Value)")
-			.append(" AND I_IsImported<>'Y'").append (clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (no != 0)
-			log.warning ("Invalid PostingTypee=" + no);
-
-
 		//	** Account Elements (optional) **
 		//	(C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0)
 
@@ -400,6 +351,70 @@ public class ImportGLJournal extends FTUProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			log.warning ("Invalid Org=" + no);
+
+		//added by david castillo 07/12/2022 set period from org first
+
+		//	Set Period by org
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+			.append("SET C_Period_ID=(SELECT MAX(p.C_Period_ID) FROM C_Period p")
+			.append(" INNER JOIN C_Year y ON (y.C_Year_ID=p.C_Year_ID)")
+			.append(" INNER JOIN AD_OrgInfo c ON (c.C_Calendar_ID=y.C_Calendar_ID)")
+			.append(" WHERE c.AD_Org_ID=i.AD_Org_ID")
+			// globalqss - cruiz - Bug [ 1577712 ] Financial Period Bug
+			.append(" AND i.DateAcct BETWEEN p.StartDate AND p.EndDate AND p.IsActive='Y' AND p.PeriodType=i.PeriodType) ")
+			.append("WHERE C_Period_ID IS NULL")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set Period=" + no);
+		
+		//end david castillo
+		 
+		//	Set Period
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+			.append("SET C_Period_ID=(SELECT MAX(p.C_Period_ID) FROM C_Period p")
+			.append(" INNER JOIN C_Year y ON (y.C_Year_ID=p.C_Year_ID)")
+			.append(" INNER JOIN AD_ClientInfo c ON (c.C_Calendar_ID=y.C_Calendar_ID)")
+			.append(" WHERE c.AD_Client_ID=i.AD_Client_ID")
+			// globalqss - cruiz - Bug [ 1577712 ] Financial Period Bug
+			.append(" AND i.DateAcct BETWEEN p.StartDate AND p.EndDate AND p.IsActive='Y' AND p.PeriodType=i.PeriodType) ")
+			.append("WHERE C_Period_ID IS NULL")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		
+		if (log.isLoggable(Level.FINE)) log.fine("Set Period=" + no);
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Period, '")
+			.append("WHERE C_Period_ID IS NULL")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning ("Invalid Period=" + no);
+		
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+			.append("SET I_ErrorMsg=I_ErrorMsg||'WARN=Period Closed, ' ")
+			.append("WHERE C_Period_ID IS NOT NULL AND NOT EXISTS")
+			.append(" (SELECT * FROM C_PeriodControl pc WHERE pc.C_Period_ID=i.C_Period_ID AND DocBaseType='GLJ' AND PeriodStatus='O') ")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning ("Period Closed=" + no);
+
+		//	Posting Type
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+			.append("SET PostingType='A' ")
+			.append("WHERE PostingType IS NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set Actual PostingType=" + no);
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid PostingType, ' ")
+			.append("WHERE PostingType IS NULL OR NOT EXISTS")
+			.append(" (SELECT * FROM AD_Ref_List r WHERE r.AD_Reference_ID=125 AND i.PostingType=r.Value)")
+			.append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning ("Invalid PostingTypee=" + no);
+
+
 
 		//	Set Account
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
@@ -827,8 +842,9 @@ public class ImportGLJournal extends FTUProcess
 							//
 							journal.setCurrency (imp.getC_Currency_ID(), imp.getC_ConversionType_ID(), imp.getCurrencyRate());
 							//
-							journal.setC_Period_ID(imp.getC_Period_ID());
+							
 							journal.setDateAcct(imp.getDateAcct());		//	sets Period if not defined
+							journal.setC_Period_ID(imp.getC_Period_ID());
 							journal.setDateDoc (imp.getDateAcct());
 							
 							
@@ -885,8 +901,9 @@ public class ImportGLJournal extends FTUProcess
 							//
 							journal.setCurrency (imp.getC_Currency_ID(), imp.getC_ConversionType_ID(), imp.getCurrencyRate());
 							//
-							journal.setC_Period_ID(imp.getC_Period_ID());
+						
 							journal.setDateAcct(imp.getDateAcct());		//	sets Period if not defined
+							journal.setC_Period_ID(imp.getC_Period_ID());
 							journal.setDateDoc (imp.getDateAcct());
 							
 							
