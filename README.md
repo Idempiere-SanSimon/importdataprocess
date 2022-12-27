@@ -1,7 +1,7 @@
-# importdataprocess
+# net.frontuari.importdataprocess
 
-- Copyright: 2021 Frontuari
-- Repository: https://github.com/Frontuari/net.frontuari.importdataprocess-8.2
+- Copyright: 2022 Frontuari, C.A. <https://frontuari.net>
+- Repository: https://github.com/Frontuari/sporteventmanage.git
 - License: GPL 2
 
 ## Description
@@ -21,7 +21,7 @@ Put the plugin description here
 ## Prerequisites
 
 - Java 11, commands `java` and `javac`.
-- iDempiere 8.2.0
+- iDempiere 9.0.0
 - Set `IDEMPIERE_REPOSITORY` env variable
 
 ## Features/Documentation

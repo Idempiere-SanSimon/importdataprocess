@@ -1,4 +1,4 @@
-# importdataprocess - Test
+# net.frontuari.importdataprocess - Test
 
 This fragment allows you to test your plugin with Junit 5.
 

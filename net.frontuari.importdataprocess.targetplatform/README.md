@@ -1,6 +1,6 @@
-# importdataprocess - Target Platform
+# net.frontuari.importdataprocess - Target Platform
 
-A target platform is necessary to build a iDempiere plugin. This is a smart target platform. Current iDempiere Version `8.2.0`.
+A target platform is necessary to build a iDempiere plugin. This is a smart target platform. Current iDempiere Version `9.0.0`.
 
 ## Prerequisites
 

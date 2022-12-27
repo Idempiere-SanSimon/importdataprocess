@@ -219,7 +219,7 @@ public class ImportProductBOM extends CustomProcess {
 		bom.setDescription(importBOM.getDescription());
 		
 		if (importBOM.getDocumentNo() != null)
-		bom.setDocumentNo(importBOM.getDocumentNo());
+		bom.set_ValueOfColumn("DocumentNo", importBOM.getDocumentNo());
 		
 		if (importBOM.getHelp() != null)
 		bom.setHelp(importBOM.getHelp());

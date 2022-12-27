@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><?pde version="3.8"?>
-<target name="idempiere-8.2.0" sequenceNumber="91">
+<target name="idempiere-9.0.0" sequenceNumber="91">
     <locations>
         <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
             <unit id="org.adempiere.base.feature.feature.group"/>
@@ -18,6 +18,12 @@
             <unit id="org.idempiere.hazelcast.service.feature.feature.group"/>
             <unit id="org.idempiere.zk.feature.feature.group"/>
             <repository location="file:///${TPidempiereP2}"/>
+        </location>
+        <location includeSource="true" missingManifest="generate" type="Maven">
+           <groupId>io.github.classgraph</groupId>
+             <artifactId>classgraph</artifactId>
+             <version>4.8.138</version>
+             <type>jar</type>
         </location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
