@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-Category: idempiere-plugin
 Bundle-ManifestVersion: 2
-Bundle-Name: net.frontuari.importdataprocess
+Bundle-Name: Import Data Process
 Bundle-SymbolicName: net.frontuari.importdataprocess
 Bundle-Version: 9.0.0.qualifier
 Bundle-Vendor: Frontuari, C.A. <https://frontuari.net>
