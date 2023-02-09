@@ -722,7 +722,7 @@ public class ImportGLJournal extends FTUProcess
 			
 				/** added by david castillo 24/10/2022 verify initial accountNo characters with user1access characters*/
 				
-				if (MSysConfig.getBooleanValue("checkInitialAccountNo", false, getAD_Client_ID()) && imp.getC_Activity_ID() > 0 && imp.getUser1_ID() > 0) {
+				if (MSysConfig.getBooleanValue("checkInitialAccountNo", false, getAD_Client_ID()) && (imp.getC_Activity_ID() > 0 && imp.getUser1_ID() > 0)) {
 					
 					boolean validAcc = false;
 					String values = DB.getSQLValueString(get_TrxName(), "SELECT AccountValue FROM FTU_Activity_User1_Access WHERE "
