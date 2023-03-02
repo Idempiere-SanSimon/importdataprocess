@@ -511,7 +511,7 @@ public class ImportGLJournal extends FTUProcess
 		if (log.isLoggable(Level.FINE)) log.fine("Set Activity from Value=" + no);
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Activity, '")
-			.append("WHERE C_Activity_ID IS NULL AND ActivityValue IS NOT NULL")
+			.append("WHERE C_Activity_ID IS NULL AND (ActivityValue IS NOT NULL AND TRIM(ActivityValue) <>'')")
 			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
