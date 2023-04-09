@@ -21,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrder;
@@ -36,6 +37,7 @@ import org.compiere.util.DB;
  *  @author 	Jorge Colmenarez
  * 	@version 	$Id: ImportInOut.java,v 1.0 2021/05/04 18:26 jlctmaster Frontuari,C.A. $
  */
+@Process
 public class ImportInOut extends CustomProcess {
 	
 	/**	Client to be imported to		*/

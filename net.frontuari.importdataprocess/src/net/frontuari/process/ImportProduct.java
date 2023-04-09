@@ -24,6 +24,7 @@ import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.ImportValidator;
 import org.adempiere.process.ImportProcess;
@@ -47,6 +48,7 @@ import net.frontuari.base.CustomProcess;
  * 			<li>FR [ 2788278 ] Data Import Validator - migrate core processes
  * 				https://sourceforge.net/tracker/?func=detail&aid=2788278&group_id=176962&atid=879335
  */
+@Process
 public class ImportProduct extends CustomProcess implements ImportProcess
 {
 	/**	Client to be imported to		*/

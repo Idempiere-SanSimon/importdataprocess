@@ -16,6 +16,7 @@ package net.frontuari.process;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.compiere.model.MOrg;
 import org.compiere.model.MProduct;
 import org.compiere.model.MUOM;
@@ -38,7 +39,7 @@ import net.frontuari.model.X_I_Product_BOM;
  * @author alberto.juarez@e-evolution.com, www.e-evolution.com
  * @version $Id: ImportProductBOM.java, v 1.3, 14 sept 2010
  */
-
+@Process
 public class ImportProductBOM extends CustomProcess {
 
 	private boolean m_DeleteOldImported = false;

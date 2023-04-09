@@ -23,6 +23,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.adempiere.exceptions.DBException;
 import org.adempiere.model.ImportValidator;
 import org.adempiere.process.ImportProcess;
@@ -41,6 +42,7 @@ import org.eevolution.model.X_HR_Employee;
  * 	@author 	Jorge Colmenarez
  * 	@version 	$Id: ImportEmployee.java,v 1.0 2021/03/25 12:46 jlctmaster Exp $
  */
+@Process
 public class ImportEmployee extends CustomProcess implements ImportProcess {
 
 	/**	Client to be imported to		*/

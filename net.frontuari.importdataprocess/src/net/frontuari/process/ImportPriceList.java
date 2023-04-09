@@ -29,6 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MPriceListVersion;
@@ -48,6 +49,7 @@ import net.frontuari.base.CustomProcess;
  *
  * 	@author 	Carlos Ruiz
  */
+@Process
 public class ImportPriceList extends CustomProcess
 {
 	/**	Client to be imported to		*/

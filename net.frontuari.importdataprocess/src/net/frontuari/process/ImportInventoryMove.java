@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.compiere.model.I_M_Movement;
 import org.compiere.model.I_M_MovementLine;
 import org.compiere.model.MAttributeSetInstance;
@@ -56,7 +57,7 @@ import org.compiere.model.MMovementLine;
  *  @version	$Id: ImportInventoryMovement.java,v 1.1 2021-11-12 10:20
  *  @feature	Support for Import ASI & ASITo	
  */
-
+@Process
 public class ImportInventoryMove extends CustomProcess {
 
 	private boolean			m_DeleteOldImported = false;

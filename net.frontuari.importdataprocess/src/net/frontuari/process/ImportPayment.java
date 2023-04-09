@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.compiere.model.I_I_Payment;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MPayment;
@@ -43,6 +44,7 @@ import org.compiere.model.MPayment;;
  *  Contributor(s):
  *    Carlos Ruiz - globalqss - FR [ 1992542 ] Import Payment doesn't have DocAction parameter
  */
+@Process
 public class ImportPayment extends CustomProcess
 {
 	/**	Organization to be imported to	*/

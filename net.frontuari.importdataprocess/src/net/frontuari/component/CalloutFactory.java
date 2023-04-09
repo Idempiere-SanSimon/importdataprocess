@@ -13,29 +13,22 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2022 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2023 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
  */
 
 package net.frontuari.component;
 
-import net.frontuari.base.CustomCalloutFactory;
+import org.adempiere.base.AnnotationBasedColumnCalloutFactory;
 
 /**
  * Callout Factory
  */
-public class CalloutFactory extends CustomCalloutFactory {
+public class CalloutFactory extends AnnotationBasedColumnCalloutFactory {
 
-	/**
-	 * For initialize class. Register the custom callout to build
-	 * 
-	 * <pre>
-	 * protected void initialize() {
-	 * 	registerCallout(MTableExample.Table_Name, MTableExample.COLUMNNAME_Text, CPrintPluginInfo.class);
-	 * }
-	 * </pre>
-	 */
 	@Override
-	protected void initialize() {
+	protected String[] getPackages() {
+		return new String[] { "net.frontuari.callout" };
 	}
 
 }
+

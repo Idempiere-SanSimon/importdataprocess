@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.compiere.model.MDiscountSchema;
 import org.compiere.model.MDiscountSchemaLine;
 import org.compiere.process.ProcessInfoParameter;
@@ -14,7 +15,7 @@ import org.compiere.util.DB;
 import net.frontuari.base.CustomProcess;
 
 import net.frontuari.model.X_I_DiscountSchema;
-
+@Process
 public class ImportDiscountSchema extends CustomProcess {
 
 	public ImportDiscountSchema() {

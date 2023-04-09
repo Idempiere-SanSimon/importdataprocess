@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.adempiere.exceptions.DBException;
 import org.compiere.model.PO;
 import org.compiere.process.ProcessInfoParameter;
@@ -16,7 +17,7 @@ import net.frontuari.base.CustomProcess;
 import net.frontuari.model.MFTUForecast;
 import net.frontuari.model.MFTUForecastLine;
 import net.frontuari.model.X_I_Forecast;
-
+@Process
 public class ImportForecast extends CustomProcess{
 
 	/**	Client to be imported to		*/

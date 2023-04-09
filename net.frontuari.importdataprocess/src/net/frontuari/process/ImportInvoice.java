@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MInOut;
@@ -45,6 +46,7 @@ import net.frontuari.base.CustomProcess;
  * 	@author 	Jorg Janke
  * 	@version 	$Id: ImportInvoice.java,v 1.1 2007/09/05 09:27:31 cruiz Exp $
  */
+@Process
 public class ImportInvoice extends CustomProcess
 {
 	/**	Client to be imported to		*/

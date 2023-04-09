@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.adempiere.exceptions.DBException;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.process.ProcessInfoParameter;
@@ -15,7 +16,7 @@ import org.compiere.util.Env;
 
 import net.frontuari.base.CustomProcess;
 
-
+@Process
 public class ImportBPBankAccount extends CustomProcess{
 	
 	private boolean	p_deleteOldImported = false;

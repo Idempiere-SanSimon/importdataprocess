@@ -13,29 +13,22 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2022 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2023 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
  */
 
 package net.frontuari.component;
 
-import net.frontuari.base.CustomEventFactory;
+import org.adempiere.base.AnnotationBasedEventManager;
 
 /**
  * Event Factory
  */
-public class EventFactory extends CustomEventFactory {
+public class EventFactory extends AnnotationBasedEventManager {
 
-	/**
-	 * For initialize class. Register the custom events to build
-	 * 
-	 * <pre>
-	 * protected void initialize() {
-	 * 	registerEvent(IEventTopics.DOC_BEFORE_COMPLETE, MTableExample.Table_Name, EPrintPluginInfo.class);
-	 * }
-	 * </pre>
-	 */
 	@Override
-	protected void initialize() {
+	public String[] getPackages() {
+		return new String[] { "net.frontuari.event" };
 	}
 
 }
+

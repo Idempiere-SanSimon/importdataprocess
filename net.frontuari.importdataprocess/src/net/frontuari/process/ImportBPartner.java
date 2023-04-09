@@ -25,6 +25,7 @@ import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.adempiere.exceptions.DBException;
 import org.adempiere.model.ImportValidator;
 import org.adempiere.process.ImportProcess;
@@ -56,6 +57,7 @@ import net.frontuari.base.CustomProcess;
  * 	@author Jorge Colmenarez, Frontuari, C.A. http://frontuari.net
  * 			Support for LVE Fields Required, Add Support for Fields for Customer BPartners
  */
+@Process
 public class ImportBPartner extends CustomProcess
 implements ImportProcess
 {

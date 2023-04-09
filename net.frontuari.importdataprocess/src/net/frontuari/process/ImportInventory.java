@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
+import org.adempiere.base.annotation.Process;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.ImportValidator;
 import org.adempiere.process.ImportProcess;
@@ -62,6 +63,7 @@ import net.frontuari.model.FTUMInventoryLine;
  *  Carlos Ruiz - globalqss - IDEMPIERE-281 Extend Import Inventory to support also internal use
  *  Deepak Pansheriya - logilite - IDEMPIERE-2314 Making import inventory process extendible
  */
+@Process
 public class ImportInventory extends CustomProcess implements ImportProcess
 {
 	/**	Client to be imported to		*/

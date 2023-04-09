@@ -27,6 +27,7 @@ import org.compiere.util.Env;
 /** Generated Model for I_Product_BOM
  *  @author Adempiere (generated) 
  *  @version Release 3.9.2 - $Id$ */
+@org.adempiere.base.Model(table = "I_Product_BOM")
 public class X_I_Product_BOM extends PO implements I_I_Product_BOM, I_Persistent 
 {
 
