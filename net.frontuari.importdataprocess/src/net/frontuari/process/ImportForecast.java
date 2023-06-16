@@ -52,7 +52,7 @@ public class ImportForecast extends CustomProcess{
 		String clientCheck = getWhereClause();
 		if (m_deleteOldImported)
 		{
-			sql = new StringBuilder ("DELETE I_Forecast ")
+			sql = new StringBuilder ("DELETE FROM I_Forecast ")
 					.append("WHERE I_IsImported='Y'").append(clientCheck);
 			no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Delete Old Impored =" + no);
