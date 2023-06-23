@@ -54,7 +54,7 @@ public class ImportBPBankAccount extends CustomProcess{
 		}
 		
 		//Set BPartner
-		sql = new StringBuilder ("UPDATE I_BPartnerBankAccount as bpi SET C_BPartner_ID=(SELECT bp.C_BPartner_ID as C_BPartner_ID FROM C_BPartner as bp WHERE bp.Value=bpi.BPartnerValue) WHERE bpi.C_BPartner_ID IS NULL AND bpi.I_IsImported<>'Y'");
+		sql = new StringBuilder ("UPDATE I_BPartnerBankAccount as bpi SET C_BPartner_ID=(SELECT bp.C_BPartner_ID as C_BPartner_ID FROM C_BPartner as bp WHERE bp.Value=bpi.BPartnerValue) WHERE bpi.C_BPartner_ID IS NULL AND bpi.BPartnerValue IS NOT NULL AND bpi.I_IsImported<>'Y'");
 		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set BPartner=" + no);	
 		
@@ -63,8 +63,13 @@ public class ImportBPBankAccount extends CustomProcess{
 		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set A_Name=" + no);
 		
-		//Set BankAccount
-		sql = new StringBuilder ("UPDATE I_BPartnerBankAccount as bpi SET C_Bank_ID=(SELECT cb.C_Bank_ID as C_Bank_ID FROM C_Bank cb WHERE cb.name=bpi.BankName) WHERE bpi.C_BPartner_ID IS NULL AND bpi.I_IsImported<>'Y'");
+		//Set Bank by Name
+		sql = new StringBuilder ("UPDATE I_BPartnerBankAccount as bpi SET C_Bank_ID=(SELECT cb.C_Bank_ID as C_Bank_ID FROM C_Bank cb WHERE cb.name=bpi.BankName) WHERE bpi.C_Bank_ID IS NULL AND bpi.BankName IS NOT NULL AND bpi.I_IsImported<>'Y'");
+		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set Bank=" + no);
+		
+		//Set Bank by Routing No
+		sql = new StringBuilder ("UPDATE I_BPartnerBankAccount as bpi SET C_Bank_ID=(SELECT cb.C_Bank_ID as C_Bank_ID FROM C_Bank cb WHERE cb.name=bpi.RoutingNo) WHERE bpi.C_Bank_ID IS NULL AND bpi.RoutingNo IS NOT NULL AND bpi.I_IsImported<>'Y'");
 		no = DB.executeUpdateEx(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set Bank=" + no);
 		
