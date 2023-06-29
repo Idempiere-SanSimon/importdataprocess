@@ -298,8 +298,8 @@ public class ImportForecast extends CustomProcess{
 				{
 					X_I_Forecast IForecast = new X_I_Forecast(getCtx(), rs, get_TrxName());
 					
-					String sqlForecast = "Select M_Forecast_ID from M_Forecast where C_Calendar_ID = ? and C_Year_ID = ? and ForecastType = ?";
-					int M_Forecast_ID = DB.getSQLValue(get_TrxName(), sqlForecast, IForecast.getC_Calendar_ID(),IForecast.getC_Year_ID(),IForecast.getForecastType());
+					String sqlForecast = "Select M_Forecast_ID from M_Forecast where C_Calendar_ID = ? and C_Year_ID = ? and ForecastType = ? AND Name = ?";
+					int M_Forecast_ID = DB.getSQLValue(get_TrxName(), sqlForecast, IForecast.getC_Calendar_ID(),IForecast.getC_Year_ID(),IForecast.getForecastType(),IForecast.getName());
 					
 					if (M_Forecast_ID <= 0)
 						M_Forecast_ID = 0;
