@@ -112,7 +112,7 @@ public class ImportPayment extends CustomProcess
 		//	Delete Old Imported
 		if (p_deleteOldImported)
 		{
-			sql = new StringBuilder ("DELETE I_Payment ")
+			sql = new StringBuilder ("DELETE FROM I_Payment ")
 				  .append("WHERE I_IsImported='Y'").append (clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Delete Old Impored =" + no);
@@ -463,7 +463,7 @@ public class ImportPayment extends CustomProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set OrgTrx from OrgValue=" + no);
 		sql = new StringBuilder ("UPDATE I_Payment i ")
-			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid OrgTrx, '")
+			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid OrgTrx, ' ")
 			.append("WHERE AD_OrgTrx_ID IS NULL AND OrgValue IS NOT NULL")
 			.append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
@@ -482,7 +482,7 @@ public class ImportPayment extends CustomProcess
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Set CVC_CashFlowConcept_ID from CVC_CashFlowConceptValue=" + no);
 			sql = new StringBuilder ("UPDATE I_Payment i ")
-				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid CVC_CashFlowConceptValue, '")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid CVC_CashFlowConceptValue, ' ")
 				.append("WHERE CVC_CashFlowConcept_ID IS NULL AND CVC_CashFlowConceptValue IS NOT NULL")
 				.append(" AND I_IsImported<>'Y'").append (clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
