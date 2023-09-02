@@ -353,7 +353,7 @@ public class ImportGLJournal extends CustomProcess
 
 		//	Set/Overwrite Home Currency Rate
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
-			.append("SET CurrencyRate=1")
+			.append("SET CurrencyRate=1 ")
 			.append(" WHERE EXISTS (SELECT * FROM C_AcctSchema a")
 			.append(" WHERE a.C_AcctSchema_ID=i.C_AcctSchema_ID AND a.C_Currency_ID=i.C_Currency_ID)")
 			.append(" AND C_Currency_ID IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
