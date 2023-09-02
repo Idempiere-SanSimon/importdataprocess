@@ -45,7 +45,6 @@ import org.compiere.util.Msg;
 import org.eevolution.model.X_I_Movement;
 
 import net.frontuari.base.CustomProcess;
-import org.compiere.model.MMovementLine;
 
 /**
  *	Import Inventory Movement from I_M_Movemen

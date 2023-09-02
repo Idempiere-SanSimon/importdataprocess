@@ -710,7 +710,8 @@ public class ImportInvoice extends CustomProcess
 
 		//	Go through Invoice Records w/o C_BPartner_ID
 		sql = new StringBuilder ("SELECT * FROM I_Invoice ")
-			  .append("WHERE I_IsImported='N' AND C_BPartner_ID IS NULL").append (clientCheck);
+			  .append("WHERE I_IsImported='N' AND C_BPartner_ID IS NULL").append (clientCheck)
+			  .append(" ORDER BY DocumentNo,C_BPartner_ID,C_DocType_ID,DateInvoiced ASC ");
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
@@ -853,7 +854,7 @@ public class ImportInvoice extends CustomProcess
 		//	Go through Invoice Records w/o
 		sql = new StringBuilder ("SELECT * FROM I_Invoice ")
 			  .append("WHERE I_IsImported='N'").append (clientCheck)
-			.append(" ORDER BY C_BPartner_ID, C_BPartner_Location_ID, I_Invoice_ID");
+			.append(" ORDER BY DocumentNo, C_BPartner_ID, C_DocType_ID, DateInvoiced, C_BPartner_Location_ID, I_Invoice_ID");
 		try
 		{
 			pstmt = DB.prepareStatement (sql.toString(), get_TrxName());
@@ -1030,13 +1031,14 @@ public class ImportInvoice extends CustomProcess
 			{
 				// Dont process if m_docAction Is Empty
 				if (!m_docAction.equals("")) {
-				if(!invoice.processIt (m_docAction)) {
-					log.warning("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
-					throw new IllegalStateException("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
-					
-				}
+					if(!invoice.processIt (m_docAction)) {
+						log.warning("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
+						throw new IllegalStateException("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
+						
+					}
 				}
 				invoice.saveEx();
+				commitEx();
 			}
 		}
 		catch (Exception e)
