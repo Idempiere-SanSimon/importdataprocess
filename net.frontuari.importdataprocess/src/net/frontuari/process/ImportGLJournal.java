@@ -118,7 +118,7 @@ public class ImportGLJournal extends CustomProcess
 		//	Delete Old Imported
 		if (m_DeleteOldImported)
 		{
-			sql = new StringBuilder ("DELETE I_GLJournal ")
+			sql = new StringBuilder ("DELETE FROM I_GLJournal ")
 				  .append("WHERE I_IsImported='Y'").append (clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Delete Old Impored =" + no);
@@ -489,7 +489,7 @@ public class ImportGLJournal extends CustomProcess
 		if (no != 0)
 			log.warning ("Invalid Account=" + no);
 
-		//	Set BPartner
+		//	Set BPartner by Value
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
 			.append("SET C_BPartner_ID=(SELECT bp.C_BPartner_ID FROM C_BPartner bp")
 			.append(" WHERE bp.Value=i.BPartnerValue AND bp.IsSummary='N' AND i.AD_Client_ID=bp.AD_Client_ID) ")
@@ -502,6 +502,20 @@ public class ImportGLJournal extends CustomProcess
 			.append("WHERE C_BPartner_ID IS NULL AND BPartnerValue IS NOT NULL")
 			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		//	Set BPartner by TaxID
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+				.append("SET C_BPartner_ID=(SELECT bp.C_BPartner_ID FROM C_BPartner bp")
+				.append(" WHERE bp.TaxID=i.BPTaxID AND bp.IsSummary='N' AND i.AD_Client_ID=bp.AD_Client_ID) ")
+				.append("WHERE C_BPartner_ID IS NULL AND BPTaxID IS NOT NULL")
+				.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set BPartner from TaxID=" + no);
+			sql = new StringBuilder ("UPDATE I_GLJournal i ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid BPartner, '")
+				.append("WHERE C_BPartner_ID IS NULL AND BPTaxID IS NOT NULL")
+				.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+		
 		if (no != 0)
 			log.warning ("Invalid BPartner=" + no);
 

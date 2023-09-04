@@ -385,6 +385,14 @@ public class ImportInvoice extends CustomProcess
 			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set BP from Value=" + no);
+		//	BP from TaxID
+		sql = new StringBuilder ("UPDATE I_Invoice o ")
+			  .append("SET C_BPartner_ID=(SELECT MAX(C_BPartner_ID) FROM C_BPartner bp")
+			  .append(" WHERE o.BPTaxID=bp.TaxID AND o.AD_Client_ID=bp.AD_Client_ID) ")
+			  .append("WHERE C_BPartner_ID IS NULL AND BPTaxID IS NOT NULL")
+			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set BP from TaxID=" + no);
 		//	Default BP
 		sql = new StringBuilder ("UPDATE I_Invoice o ")
 			  .append("SET C_BPartner_ID=(SELECT C_BPartnerCashTrx_ID FROM AD_ClientInfo c")
@@ -393,9 +401,6 @@ public class ImportInvoice extends CustomProcess
 			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set Default BP=" + no);
-
-		
-		
 		//BP Location By Name
 		sql = new StringBuilder ("UPDATE I_Invoice o ")
 		  .append("SET C_BPartner_Location_ID=(SELECT C_BPartner_Location_ID FROM C_BPartner_Location c")
@@ -629,12 +634,7 @@ public class ImportInvoice extends CustomProcess
 				if (no != 0)
 				log.warning("No SalesRep_ID=" + no);
 						
-			
-							
-		
-
-				
-			//C_Order_ID
+		// C_Order_ID
 		sql = new StringBuilder ("UPDATE I_Invoice i ")
 		  .append("SET C_Order_ID=(SELECT MAX(C_Order_ID) FROM C_Order o")
 		  .append(" WHERE i.OrderDocumentNo=o.DocumentNo AND i.AD_Client_ID=o.AD_Client_ID AND i.AD_Org_ID = o.AD_Org_ID) ")
@@ -698,8 +698,7 @@ public class ImportInvoice extends CustomProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (no != 0)
 			log.warning ("No Invoice Affected=" + no);
-			
-		
+
 		commitEx();
 		
 		if (p_IsValidateOnly)
