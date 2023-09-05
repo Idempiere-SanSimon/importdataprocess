@@ -124,70 +124,75 @@ public class ImportGLJournal extends CustomProcess
 			if (log.isLoggable(Level.FINE)) log.fine("Delete Old Impored =" + no);
 		}
 
+		X_I_GLJournal test = new X_I_GLJournal(getCtx(),getRecord_ID(),get_TrxName());
 		
-		PreparedStatement pstmtValidate = null;
-		ResultSet rsValidate = null;
-		sql = new StringBuilder ("SELECT * FROM I_GLJournal ")
-				.append("WHERE SPIFileContent IS NOT NULL AND I_IsImported='N'").append (clientCheck)
-				.append(" ORDER BY AD_Org_ID,COALESCE(BatchDocumentNo, I_GLJournal_ID::varchar), COALESCE(JournalDocumentNo, ")
-						.append("I_GLJournal_ID::varchar),	 C_AcctSchema_ID, PostingType, C_DocType_ID, GL_Category_ID, ")
-						.append("C_Currency_ID, TRUNC(DateAcct), Line, I_GLJournal_ID");
-			try
-			{
-				pstmtValidate = DB.prepareStatement (sql.toString (), get_TrxName());
-				rsValidate = pstmtValidate.executeQuery ();
-				//
-				while (rsValidate.next())
-				{
-					X_I_GLJournal imp = new X_I_GLJournal (getCtx (), rsValidate, get_TrxName());
-
-					String content = imp.get_ValueAsString("SPIFileContent");
-					String OrgValue = content.substring(0, 4);
-					String date = content.substring(47,55);
-					String accountNo = content.substring(55,59);
-					String User1 = content.substring(60,64);
-					String Description = content.substring(126,155);
-					String trxType = content.substring(155,156);
-					String amt = content.substring(content.length()-16,content.length());
-					
-					log.log(Level.SEVERE,OrgValue + " " +date + " " + accountNo+ " " +User1 + " " + Description+ " " + trxType+ " " +amt  );
-					
-					
-					//we format date first 
-					date = date.substring(0,2) + "/" + date.substring(2,4) + "/" + date.substring(4,8)+ " 00:00:00";
-					log.log(Level.SEVERE, date);
-					DateTimeFormatter formatDateTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-			        LocalDateTime localDateTime = LocalDateTime.from(formatDateTime.parse(date));
-			        Timestamp ts = Timestamp.valueOf(localDateTime);
-					//set values
-			        imp.setDateAcct(ts);
-					imp.setOrgValue(OrgValue);
-					imp.setOrgTrxValue(OrgValue);
-					imp.setAccountValue(accountNo);
-					imp.set_ValueOfColumn("User1Value", User1);
-					imp.setDescription(Description);
-					BigDecimal Amt = new BigDecimal (amt);
-					if (trxType.equalsIgnoreCase("1")) {
-					imp.setAmtAcctDr(Amt);
-					imp.setAmtSourceDr(Amt);
-					}else {
-					imp.setAmtAcctCr(Amt);
-					imp.setAmtSourceCr(Amt);	
+		if (test.get_ColumnIndex("SPIFileContent")>0) {
+				PreparedStatement pstmtValidate = null;
+				ResultSet rsValidate = null;
+				sql = new StringBuilder ("SELECT * FROM I_GLJournal ")
+						.append("WHERE SPIFileContent IS NOT NULL AND I_IsImported='N'").append (clientCheck)
+						.append(" ORDER BY AD_Org_ID,COALESCE(BatchDocumentNo, I_GLJournal_ID::varchar), COALESCE(JournalDocumentNo, ")
+								.append("I_GLJournal_ID::varchar),	 C_AcctSchema_ID, PostingType, C_DocType_ID, GL_Category_ID, ")
+								.append("C_Currency_ID, TRUNC(DateAcct), Line, I_GLJournal_ID");
+					try
+					{
+						pstmtValidate = DB.prepareStatement (sql.toString (), get_TrxName());
+						rsValidate = pstmtValidate.executeQuery ();
+						//
+						while (rsValidate.next())
+						{
+							X_I_GLJournal imp = new X_I_GLJournal (getCtx (), rsValidate, get_TrxName());
+		
+							String content = imp.get_ValueAsString("SPIFileContent");
+							String OrgValue = content.substring(0, 4);
+							String date = content.substring(47,55);
+							String accountNo = content.substring(55,59);
+							String User1 = content.substring(60,64);
+							String Description = content.substring(126,155);
+							String trxType = content.substring(155,156);
+							String amt = content.substring(content.length()-16,content.length());
+							
+							log.log(Level.SEVERE,OrgValue + " " +date + " " + accountNo+ " " +User1 + " " + Description+ " " + trxType+ " " +amt  );
+							
+							
+							//we format date first 
+							date = date.substring(0,2) + "/" + date.substring(2,4) + "/" + date.substring(4,8)+ " 00:00:00";
+							log.log(Level.SEVERE, date);
+							DateTimeFormatter formatDateTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+					        LocalDateTime localDateTime = LocalDateTime.from(formatDateTime.parse(date));
+					        Timestamp ts = Timestamp.valueOf(localDateTime);
+							//set values
+					        imp.setDateAcct(ts);
+							imp.setOrgValue(OrgValue);
+							imp.setOrgTrxValue(OrgValue);
+							imp.setAccountValue(accountNo);
+							imp.set_ValueOfColumn("User1Value", User1);
+							imp.setDescription(Description);
+							BigDecimal Amt = new BigDecimal (amt);
+							if (trxType.equalsIgnoreCase("1")) {
+							imp.setAmtAcctDr(Amt);
+							imp.setAmtSourceDr(Amt);
+							}else {
+							imp.setAmtAcctCr(Amt);
+							imp.setAmtSourceCr(Amt);	
+							}
+							//imp.setDateAcct(m_DateAcct);
+							imp.saveEx();
+						}
+						
+					}catch (SQLException ex)
+					{
+						log.log(Level.SEVERE, sql.toString(), ex);
 					}
-					//imp.setDateAcct(m_DateAcct);
-					imp.saveEx();
+					finally
+					{
+						DB.close(rsValidate, pstmtValidate);
+						rsValidate = null;
+						pstmtValidate = null;
 				}
-				
-			}catch (SQLException ex)
-			{
-				log.log(Level.SEVERE, sql.toString(), ex);
-			}
-			finally
-			{
-				DB.close(rsValidate, pstmtValidate);
-				rsValidate = null;
-				pstmtValidate = null;
 		}
+		
+		test = null;
 		
 		//	Set IsActive, Created/Updated
 		sql = new StringBuilder ("UPDATE I_GLJournal ")
