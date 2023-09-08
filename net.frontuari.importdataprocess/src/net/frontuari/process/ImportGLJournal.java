@@ -593,6 +593,7 @@ public class ImportGLJournal extends CustomProcess
 		// Set User1_ID David Castillo
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
 				.append("SET User1_ID=(SELECT p.C_ElementValue_ID FROM c_elementvalue p")
+				.append(" JOIN C_Element e on p.C_Element_ID = e.C_Element_ID and e.ElementType = 'U'")
 				.append(" WHERE p.Value=i.User1Value AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID) ")
 				.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
 				.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
