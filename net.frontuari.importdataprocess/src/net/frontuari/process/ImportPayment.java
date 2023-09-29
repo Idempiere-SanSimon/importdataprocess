@@ -23,17 +23,13 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.adempiere.base.annotation.Process;
-import org.compiere.model.I_I_Payment;
 import org.compiere.model.MBankAccount;
-import org.compiere.model.MPayment;
 import org.compiere.model.X_I_Payment;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-
 import net.frontuari.base.CustomProcess;
-
-import org.compiere.model.MPayment;;
+import net.frontuari.custom.model.FTUMPayment;
 
 /**
  * 	Import Payments
@@ -255,7 +251,8 @@ public class ImportPayment extends CustomProcess
 		if (no != 0)
 			if (log.isLoggable(Level.FINE)) log.fine("Set Invoice from DocumentNo=" + no);
 		
-		//	BPartner
+		//	Modified by Jorge Colmenarez, 2023-09-28 09:33
+		//	BPartner from Value
 		sql = new StringBuilder ("UPDATE I_Payment i ")
 			  .append("SET C_BPartner_ID=(SELECT MAX(C_BPartner_ID) FROM C_BPartner bp")
 			  .append(" WHERE i.BPartnerValue=bp.Value AND i.AD_Client_ID=bp.AD_Client_ID) ")
@@ -264,7 +261,16 @@ public class ImportPayment extends CustomProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			if (log.isLoggable(Level.FINE)) log.fine("Set BP from Value=" + no);
-		
+		//	BPartner from TaxID
+		sql = new StringBuilder ("UPDATE I_Payment i ")
+				  .append("SET C_BPartner_ID=(SELECT MAX(C_BPartner_ID) FROM C_BPartner bp")
+				  .append(" WHERE i.BPTaxID=bp.TaxID AND i.AD_Client_ID=bp.AD_Client_ID) ")
+				  .append("WHERE C_BPartner_ID IS NULL AND BPTaxID IS NOT NULL")
+				  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				if (log.isLoggable(Level.FINE)) log.fine("Set BP from TaxID=" + no);
+		//	End Jorge Colmenarez
 		sql = new StringBuilder ("UPDATE I_Payment i ")
 			  .append("SET C_BPartner_ID=(SELECT MAX(C_BPartner_ID) FROM C_Invoice ii")
 			  .append(" WHERE i.C_Invoice_ID=ii.C_Invoice_ID AND i.AD_Client_ID=ii.AD_Client_ID) ")
@@ -472,19 +478,19 @@ public class ImportPayment extends CustomProcess
 		//	End Jorge Colmenarez
 
 		//David Castillo 23/08/2022 covencaucho new field CVC_CashFlowConcept_ID
-		MPayment p = new MPayment(getCtx(), getRecord_ID(), get_TrxName());
+		FTUMPayment p = new FTUMPayment(getCtx(), getRecord_ID(), get_TrxName());
 		if (p.get_ColumnIndex("CVC_CashFlowConcept_ID") != -1) {
-		sql = new StringBuilder ("UPDATE I_Payment i ")
-				.append("SET CVC_CashFlowConcept_ID=(SELECT o.CVC_CashFlowConcept_ID FROM CVC_CashFlowConcept o ")
-				.append(" WHERE o.Value=i.CVC_CashFlowConceptValue AND i.AD_Client_ID=o.AD_Client_ID) ")
-				.append("WHERE CVC_CashFlowConcept_ID IS NULL AND CVC_CashFlowConceptValue IS NOT NULL")
-				.append(" AND I_IsImported<>'Y'").append (clientCheck);
+			sql = new StringBuilder ("UPDATE I_Payment i ")
+					.append("SET CVC_CashFlowConcept_ID=(SELECT o.CVC_CashFlowConcept_ID FROM CVC_CashFlowConcept o ")
+					.append(" WHERE o.Value=i.CVC_CashFlowConceptValue AND i.AD_Client_ID=o.AD_Client_ID) ")
+					.append("WHERE CVC_CashFlowConcept_ID IS NULL AND CVC_CashFlowConceptValue IS NOT NULL")
+					.append(" AND I_IsImported<>'Y'").append (clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.FINE)) log.fine("Set CVC_CashFlowConcept_ID from CVC_CashFlowConceptValue=" + no);
 			sql = new StringBuilder ("UPDATE I_Payment i ")
-				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid CVC_CashFlowConceptValue, ' ")
-				.append("WHERE CVC_CashFlowConcept_ID IS NULL AND CVC_CashFlowConceptValue IS NOT NULL")
-				.append(" AND I_IsImported<>'Y'").append (clientCheck);
+					.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid CVC_CashFlowConceptValue, ' ")
+					.append("WHERE CVC_CashFlowConcept_ID IS NULL AND CVC_CashFlowConceptValue IS NOT NULL")
+					.append(" AND I_IsImported<>'Y'").append (clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (no != 0)
 				log.warning ("Invalid CVC_CashFlowConceptValue=" + no);
@@ -521,7 +527,7 @@ public class ImportPayment extends CustomProcess
 				}
 				
 				//	New Payment
-				MPayment payment = new MPayment (m_ctx, 0, get_TrxName());
+				FTUMPayment payment = new FTUMPayment (m_ctx, 0, get_TrxName());
 				payment.setAD_Org_ID(imp.getAD_Org_ID());
 				payment.setDocumentNo(imp.get_ValueAsString("DocumentNo"));
 				payment.setPONum(imp.getPONum());
@@ -593,13 +599,22 @@ public class ImportPayment extends CustomProcess
 				//	Support for set IsAllocated and IsReconciled 
 				payment.setIsAllocated(imp.get_ValueAsBoolean("IsAllocated"));
 				payment.setIsReconciled(imp.get_ValueAsBoolean("IsReconciled"));
+				payment.setIsPrepayment(imp.get_ValueAsBoolean("IsPrepayment"));
 				payment.setDescription(imp.get_ValueAsString("Description"));
 				//	End Jorge Colmenarez
 				// Added by Adonis Castellanos 21/10/2020
 				if(imp.get_ValueAsInt("C_ConversionType_ID")>0)
-				payment.setC_ConversionType_ID(imp.get_ValueAsInt("C_ConversionType_ID"));
-			
+					payment.setC_ConversionType_ID(imp.get_ValueAsInt("C_ConversionType_ID"));
 				// End Adonis
+				//	Added by Jorge Colmenarez, 2023-09-28 09:23
+				//	Support for Override Currency Rate
+				payment.setIsOverrideCurrencyRate(imp.get_ValueAsBoolean("IsOverrideCurrencyRate"));
+				BigDecimal currencyRate = (BigDecimal)imp.get_Value("CurrencyRate");
+				if(currencyRate.compareTo(BigDecimal.ZERO)!=0) {
+					payment.setCurrencyRate(currencyRate);
+					payment.setConvertedAmt(payment.getPayAmt().multiply(currencyRate));
+				}
+				//	End Jorge Colmenarez
 				//Added by David Castillo, 2021-02-23 
 				if (imp.get_Value("User1_ID") != null) {
 					payment.setUser1_ID(imp.get_ValueAsInt("User1_ID"));}

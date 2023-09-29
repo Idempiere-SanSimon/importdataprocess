@@ -38,6 +38,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 import net.frontuari.base.CustomProcess;
+import net.frontuari.custom.model.FTUMInvoice;
 
 
 /**
@@ -863,7 +864,7 @@ public class ImportInvoice extends CustomProcess
 			int oldC_BPartner_Location_ID = 0;
 			String oldDocumentNo = "";
 			//
-			MInvoice invoice = null;
+			FTUMInvoice invoice = null;
 			int lineNo = 0;
 			while (rs.next ())
 			{
@@ -893,7 +894,7 @@ public class ImportInvoice extends CustomProcess
 					if (oldDocumentNo == null)
 						oldDocumentNo = "";
 					//
-					invoice = new MInvoice (getCtx(), 0, get_TrxName());
+					invoice = new FTUMInvoice (getCtx(), 0, get_TrxName());
 					invoice.setClientOrg (imp.getAD_Client_ID(), imp.getAD_Org_ID());
 					invoice.setC_DocTypeTarget_ID(imp.getC_DocType_ID());
 					invoice.setIsSOTrx(imp.isSOTrx());
@@ -952,6 +953,16 @@ public class ImportInvoice extends CustomProcess
 					int C_ConversionType_ID = imp.get_ValueAsInt("C_ConversionType_ID");
 					if(C_ConversionType_ID>0)
 						invoice.setC_ConversionType_ID(C_ConversionType_ID);
+					//	Added by Jorge Colmenarez, 2023-09-28 09:23
+					//	Support for Override Currency Rate
+					invoice.setIsOverrideCurrencyRate(imp.get_ValueAsBoolean("IsOverrideCurrencyRate"));
+					BigDecimal currencyRate = (BigDecimal)imp.get_Value("CurrencyRate");
+					log.warning("Tasa="+currencyRate);
+					if(currencyRate.compareTo(BigDecimal.ZERO)!=0)
+						invoice.setCurrencyRate(currencyRate);
+					else
+						invoice.setCurrencyRate(new BigDecimal(0.00001));
+					//	End Jorge Colmenarez
 					
 					//	Add Order to Invoice
 					if(imp.get_ValueAsInt("M_InOut_ID") > 0 && imp.get_ValueAsInt("C_Order_ID") == 0)
