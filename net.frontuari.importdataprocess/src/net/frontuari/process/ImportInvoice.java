@@ -862,6 +862,9 @@ public class ImportInvoice extends CustomProcess
 			//	Group Change
 			int oldC_BPartner_ID = 0;
 			int oldC_BPartner_Location_ID = 0;
+			//	Added by Jorge Colmenarez, 2023-09-29 14:06, Distinct by DocType
+			int oldC_DocType_ID = 0;
+			//	End Jorge Colmenarez
 			String oldDocumentNo = "";
 			//
 			FTUMInvoice invoice = null;
@@ -875,7 +878,10 @@ public class ImportInvoice extends CustomProcess
 				//	New Invoice
 				if (oldC_BPartner_ID != imp.getC_BPartner_ID() 
 					|| oldC_BPartner_Location_ID != imp.getC_BPartner_Location_ID()
-					|| !oldDocumentNo.equals(cmpDocumentNo)	)
+					|| !oldDocumentNo.equals(cmpDocumentNo)	
+					//	Added by Jorge Colmenarez, 2023-09-29 14:06, Distinct by DocType
+					|| oldC_DocType_ID != imp.getC_DocType_ID())
+					//	End Jorge Colmenarez
 				{
 					if (invoice != null)
 					{//dont process if m_docAction is empty
@@ -891,6 +897,9 @@ public class ImportInvoice extends CustomProcess
 					oldC_BPartner_ID = imp.getC_BPartner_ID();
 					oldC_BPartner_Location_ID = imp.getC_BPartner_Location_ID();
 					oldDocumentNo = imp.getDocumentNo();
+					//	Added by Jorge Colmenarez, 2023-09-29 14:06, Distinct by DocType
+					oldC_DocType_ID = imp.getC_DocType_ID();
+					//	End Jorge Colmenarez
 					if (oldDocumentNo == null)
 						oldDocumentNo = "";
 					//
