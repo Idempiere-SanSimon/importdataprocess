@@ -131,9 +131,9 @@ public class ImportGLJournal extends CustomProcess
 				ResultSet rsValidate = null;
 				sql = new StringBuilder ("SELECT * FROM I_GLJournal ")
 						.append("WHERE SPIFileContent IS NOT NULL AND I_IsImported='N'").append (clientCheck)
-						.append(" ORDER BY AD_Org_ID,COALESCE(BatchDocumentNo, I_GLJournal_ID::varchar), COALESCE(JournalDocumentNo, ")
+						.append(" ORDER BY AD_Org_ID,TRUNC(DateAcct),COALESCE(BatchDocumentNo, I_GLJournal_ID::varchar), COALESCE(JournalDocumentNo, ")
 								.append("I_GLJournal_ID::varchar),	 C_AcctSchema_ID, PostingType, C_DocType_ID, GL_Category_ID, ")
-								.append("C_Currency_ID, TRUNC(DateAcct), Line, I_GLJournal_ID");
+								.append("C_Currency_ID, Line, I_GLJournal_ID");
 					try
 					{
 						pstmtValidate = DB.prepareStatement (sql.toString (), get_TrxName());
@@ -148,13 +148,18 @@ public class ImportGLJournal extends CustomProcess
 							String date = content.substring(47,55);
 							String accountNo = content.substring(55,59);
 							String User1 = content.substring(60,64);
+							String amt = content.substring(109,126);
 							String Description = content.substring(126,155);
 							String trxType = content.substring(155,156);
-							String amt = content.substring(content.length()-16,content.length());
 							
+							amt = amt.replace(" ", "");
+							amt = amt.replace("-", "");
+							
+							//format amt 
+							String number = amt.substring(0,amt.length()-2);
+							String decimals = amt.substring(amt.length() - 2, amt.length());
+							amt = number + "." + decimals;
 							log.log(Level.SEVERE,OrgValue + " " +date + " " + accountNo+ " " +User1 + " " + Description+ " " + trxType+ " " +amt  );
-							
-							
 							//we format date first 
 							date = date.substring(0,2) + "/" + date.substring(2,4) + "/" + date.substring(4,8)+ " 00:00:00";
 							log.log(Level.SEVERE, date);
@@ -805,9 +810,9 @@ public class ImportGLJournal extends CustomProcess
 		//	Go through Journal Records
 		sql = new StringBuilder ("SELECT * FROM I_GLJournal ")
 			.append("WHERE I_IsImported='N'").append (clientCheck)
-			.append(" ORDER BY AD_Org_ID,COALESCE(BatchDocumentNo, I_GLJournal_ID::varchar), COALESCE(JournalDocumentNo, ")
+			.append(" ORDER BY AD_Org_ID,TRUNC(DateAcct),COALESCE(BatchDocumentNo, I_GLJournal_ID::varchar), COALESCE(JournalDocumentNo, ")
 					.append("I_GLJournal_ID::varchar),	 C_AcctSchema_ID, PostingType, C_DocType_ID, GL_Category_ID, ")
-					.append("C_Currency_ID, TRUNC(DateAcct), Line, I_GLJournal_ID");
+					.append("C_Currency_ID, Line, I_GLJournal_ID");
 		try
 		{
 			pstmt = DB.prepareStatement (sql.toString (), get_TrxName());
