@@ -341,7 +341,7 @@ implements ImportProcess
 		//	Payment Term
 		sql = new StringBuilder ("UPDATE I_BPartner i ")
 				.append("SET C_PaymentTerm_ID=(SELECT C_PaymentTerm_ID FROM C_PaymentTerm pt")
-				.append(" WHERE i.PaymentTerm=pt.Name AND pt.AD_Client_ID IN (0, i.AD_Client_ID)) ")
+				.append(" WHERE i.PaymentTerm=pt.Value AND pt.AD_Client_ID IN (0, i.AD_Client_ID)) ")
 				.append("WHERE C_PaymentTerm_ID IS NULL AND PaymentTerm IS NOT NULL")
 				.append(" AND I_IsImported<>'Y'").append(clientCheck);
 		no = DB.executeUpdateEx(sql.toString(), get_TrxName());

@@ -557,15 +557,15 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 	protected void updateCosting(X_I_Inventory imp, MProduct product,
 			MInventoryLine line) {
 		String costingLevel = null;
+		
 		if(product.getM_Product_Category_ID() > 0){
 			MProductCategoryAcct pca = MProductCategoryAcct.get(getCtx(), product.getM_Product_Category_ID(), p_C_AcctSchema_ID, get_TrxName());
 			costingLevel = pca.getCostingLevel();
 			if (costingLevel == null) {
 				costingLevel = acctSchema.getCostingLevel();
 			}
-
 		}
-
+		int lineID = 0;
 		int costOrgID = p_AD_OrgTrx_ID;
 		int costASI = line.getM_AttributeSetInstance_ID();
 		if (MAcctSchema.COSTINGLEVEL_Client.equals(costingLevel)){
@@ -593,18 +593,36 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 			costingDoc.setDocAction(DocAction.ACTION_Complete);
 			costingDoc.saveEx();
 		}
+		//	Modified by Jorge Colmenarez, 2023-12-01 19:44
+		//	Prevent create excessive product adjust cost lines 
+		if(!MAcctSchema.COSTINGLEVEL_BatchLot.equals(costingLevel)) {
+			lineID = DB.getSQLValue(get_TrxName(), "SELECT MAX(M_InventoryLine_ID) FROM M_InventoryLine WHERE M_Inventory_ID = ? AND M_Product_ID = ?", costingDoc.get_ID(),cost.getM_Product_ID());
+			if(lineID<=0) {
+				FTUMInventoryLine costingLine = new FTUMInventoryLine(getCtx(), 0, get_TrxName());
+				costingLine.setM_Inventory_ID(costingDoc.getM_Inventory_ID());
+				costingLine.setM_Product_ID(cost.getM_Product_ID());
+				costingLine.setCurrentCostPrice(cost.getCurrentCostPrice());
+				costingLine.setNewCostPrice(imp.getCurrentCostPrice());
+				costingLine.setM_Locator_ID(0);
+				costingLine.setAD_Org_ID(imp.getAD_Org_ID());
+				costingLine.setM_AttributeSetInstance_ID(costASI);
+				costingLine.saveEx();
+			}
+		}else {
+			FTUMInventoryLine costingLine = new FTUMInventoryLine(getCtx(), 0, get_TrxName());
+			costingLine.setM_Inventory_ID(costingDoc.getM_Inventory_ID());
+			costingLine.setM_Product_ID(cost.getM_Product_ID());
+			costingLine.setCurrentCostPrice(cost.getCurrentCostPrice());
+			costingLine.setNewCostPrice(imp.getCurrentCostPrice());
+			costingLine.setM_Locator_ID(0);
+			costingLine.setAD_Org_ID(imp.getAD_Org_ID());
+			costingLine.setM_AttributeSetInstance_ID(costASI);
+			costingLine.saveEx();
+			lineID = costingLine.getM_InventoryLine_ID();
+		}
+		//	End Jorge Colmenarez
 		
-		FTUMInventoryLine costingLine = new FTUMInventoryLine(getCtx(), 0, get_TrxName());
-		costingLine.setM_Inventory_ID(costingDoc.getM_Inventory_ID());
-		costingLine.setM_Product_ID(cost.getM_Product_ID());
-		costingLine.setCurrentCostPrice(cost.getCurrentCostPrice());
-		costingLine.setNewCostPrice(imp.getCurrentCostPrice());
-		costingLine.setM_Locator_ID(0);
-		costingLine.setAD_Org_ID(imp.getAD_Org_ID());
-		costingLine.setM_AttributeSetInstance_ID(costASI);
-		costingLine.saveEx();
-		
-		imp.setM_CostingLine_ID(costingLine.getM_InventoryLine_ID());
+		imp.setM_CostingLine_ID(lineID);
 		imp.saveEx();
 	}
 
