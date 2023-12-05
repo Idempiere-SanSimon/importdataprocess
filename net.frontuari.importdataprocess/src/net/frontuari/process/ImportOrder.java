@@ -110,16 +110,16 @@ public class ImportOrder extends CustomProcess
 		}
 			
 		//added by david castillo 11/03/2021 support to org from importer
-				sql = new StringBuilder ("UPDATE I_Order o ")	//	org
-						  .append("SET AD_OrgTrx_ID=(SELECT AD_Org_ID FROM AD_Org d WHERE d.Value=o.OrgValue")
-						  .append(" AND o.AD_Client_ID=d.AD_Client_ID) ")
-						  .append("WHERE AD_OrgTrx_ID IS NULL AND OrgValue IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-				no = DB.executeUpdate(sql.toString(), get_TrxName());
-				
-				sql = new StringBuilder ("UPDATE I_Order o ")	//	org
-						  .append("SET AD_Org_ID = o.AD_OrgTrx_ID")
-						  .append(" WHERE AD_OrgTrx_ID IS NOT NULL AND OrgValue IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-				no = DB.executeUpdate(sql.toString(), get_TrxName());
+		sql = new StringBuilder ("UPDATE I_Order o ")	//	org
+				  .append("SET AD_OrgTrx_ID=(SELECT AD_Org_ID FROM AD_Org d WHERE d.Value=o.OrgValue")
+				  .append(" AND o.AD_Client_ID=d.AD_Client_ID) ")
+				  .append("WHERE AD_OrgTrx_ID IS NULL AND OrgValue IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		
+		sql = new StringBuilder ("UPDATE I_Order o ")	//	org
+				  .append("SET AD_Org_ID = o.AD_OrgTrx_ID")
+				  .append(" WHERE AD_OrgTrx_ID IS NOT NULL AND OrgValue IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
 				
 		//	Set Client, Org, IsActive, Created/Updated
 		sql = new StringBuilder ("UPDATE I_Order ")
@@ -136,8 +136,6 @@ public class ImportOrder extends CustomProcess
 			  .append("WHERE I_IsImported<>'Y' OR I_IsImported IS NULL");
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.INFO)) log.info ("Reset=" + no);
-		
-		
 		
 		sql = new StringBuilder ("UPDATE I_Order o ")
 			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org, '")
@@ -216,27 +214,25 @@ public class ImportOrder extends CustomProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set IsSOTrx=N=" + no);
 		//Added by David Castillo 10/03/2021 support to CurrencyIsoCode
-//		Set Currency
-			sql = new StringBuilder ("UPDATE I_Order i ")
-				.append("SET C_Currency_ID=(SELECT C_Currency_ID FROM C_Currency c")
-				.append(" WHERE i.ISO_Code=c.ISO_Code AND c.AD_Client_ID IN (0,i.AD_Client_ID)) ")
-				.append("WHERE C_Currency_ID IS NULL AND ISO_Code IS NOT NULL")
-				.append(" AND I_IsImported<>'Y'").append(clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				if (log.isLoggable(Level.INFO)) log.info("Set Currency=" + no);
-			//
-			sql = new StringBuilder ("UPDATE I_Order ")
-				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Currency,' ")
-				.append("WHERE C_Currency_ID IS NULL ")
-				.append("AND I_IsImported<>'E' ")
-				.append(" AND I_IsImported<>'Y'").append(clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				log.warning("No Currency=" + no);
-			
+		//	Set Currency
+		sql = new StringBuilder ("UPDATE I_Order i ")
+			.append("SET C_Currency_ID=(SELECT C_Currency_ID FROM C_Currency c")
+			.append(" WHERE i.ISO_Code=c.ISO_Code AND c.AD_Client_ID IN (0,i.AD_Client_ID)) ")
+			.append("WHERE C_Currency_ID IS NULL AND ISO_Code IS NOT NULL")
+			.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			if (log.isLoggable(Level.INFO)) log.info("Set Currency=" + no);
+		//
+		sql = new StringBuilder ("UPDATE I_Order ")
+			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Currency,' ")
+			.append("WHERE C_Currency_ID IS NULL ")
+			.append("AND I_IsImported<>'E' ")
+			.append(" AND I_IsImported<>'Y'").append(clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning("No Currency=" + no);
 		
-
 		//	Price List
 		//Added by david castillo 11/03/2021 support to pricelistname
 		sql = new StringBuilder ("UPDATE I_Order o ")
@@ -375,6 +371,14 @@ public class ImportOrder extends CustomProcess
 			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set BP from Value=" + no);
+		//	BP from TaxID
+		sql = new StringBuilder ("UPDATE I_Order o ")
+			  .append("SET C_BPartner_ID=(SELECT MAX(C_BPartner_ID) FROM C_BPartner bp")
+			  .append(" WHERE o.BPTaxID=bp.TaxID AND o.AD_Client_ID=bp.AD_Client_ID) ")
+			  .append("WHERE C_BPartner_ID IS NULL AND BPTaxID IS NOT NULL")
+			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set BP from TaxID=" + no);
 		//	Default BP
 		sql = new StringBuilder ("UPDATE I_Order o ")
 			  .append("SET C_BPartner_ID=(SELECT C_BPartnerCashTrx_ID FROM AD_ClientInfo c")
@@ -384,49 +388,49 @@ public class ImportOrder extends CustomProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set Default BP=" + no);
 
-//		Existing Location ? Exact Match
-			sql = new StringBuilder ("UPDATE I_Order o ")
-				  .append("SET (BillTo_ID,C_BPartner_Location_ID)=(SELECT C_BPartner_Location_ID,C_BPartner_Location_ID")
-				  .append(" FROM C_BPartner_Location bpl INNER JOIN C_Location l ON (bpl.C_Location_ID=l.C_Location_ID)")
-				  .append(" WHERE o.C_BPartner_ID=bpl.C_BPartner_ID AND bpl.AD_Client_ID=o.AD_Client_ID")
-				  .append(" AND ((o.Address1 IS NULL AND l.Address1 IS NULL) OR o.Address1=l.Address1)")
-				  .append(" AND ((o.Address2 IS NULL AND l.Address2 IS NULL) OR o.Address2=l.Address2)")
-				  .append(" AND ((o.City IS NULL AND l.City IS NULL) OR o.City=l.City)")
-				  .append(" AND ((o.Postal IS NULL AND l.Postal IS NULL) OR o.Postal=l.Postal)")
-				  .append(" AND COALESCE(o.C_Region_ID,0)=COALESCE(l.C_Region_ID,0)")
-				  .append(" AND COALESCE(o.C_Country_ID,0)=COALESCE(l.C_Country_ID,0)) ")
-				  .append("WHERE C_BPartner_ID IS NOT NULL AND C_BPartner_Location_ID IS NULL")
-				  .append(" AND I_IsImported='N'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Found Location=" + no);
-			//	Set Bill Location from BPartner
-			sql = new StringBuilder ("UPDATE I_Order o ")
-				  .append("SET BillTo_ID=(SELECT MAX(C_BPartner_Location_ID) FROM C_BPartner_Location l")
-				  .append(" WHERE l.C_BPartner_ID=o.C_BPartner_ID AND o.AD_Client_ID=l.AD_Client_ID")
-				  .append(" AND ((l.IsBillTo='Y' AND o.IsSOTrx='Y') OR (l.IsPayFrom='Y' AND o.IsSOTrx='N'))")
-				  .append(") ")
-				  .append("WHERE C_BPartner_ID IS NOT NULL AND BillTo_ID IS NULL")
-				  .append(" AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Set BP BillTo from BP=" + no);
-			//	Set Location from BPartner
-			sql = new StringBuilder ("UPDATE I_Order o ")
-				  .append("SET C_BPartner_Location_ID=(SELECT MAX(C_BPartner_Location_ID) FROM C_BPartner_Location l")
-				  .append(" WHERE l.C_BPartner_ID=o.C_BPartner_ID AND o.AD_Client_ID=l.AD_Client_ID")
-				  .append(" AND ((l.IsShipTo='Y' AND o.IsSOTrx='Y') OR o.IsSOTrx='N')")
-				  .append(") ")
-				  .append("WHERE C_BPartner_ID IS NOT NULL AND C_BPartner_Location_ID IS NULL")
-				  .append(" AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Set BP Location from BP=" + no);
-			//
-			sql = new StringBuilder ("UPDATE I_Order ")
-				  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No BP Location, ' ")
-				  .append("WHERE C_BPartner_ID IS NOT NULL AND (BillTo_ID IS NULL OR C_BPartner_Location_ID IS NULL)")
-				  .append(" AND I_IsImported<>'Y'").append (clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				log.warning ("No BP Location=" + no);
+		//	Existing Location ? Exact Match
+		sql = new StringBuilder ("UPDATE I_Order o ")
+			  .append("SET (BillTo_ID,C_BPartner_Location_ID)=(SELECT C_BPartner_Location_ID,C_BPartner_Location_ID")
+			  .append(" FROM C_BPartner_Location bpl INNER JOIN C_Location l ON (bpl.C_Location_ID=l.C_Location_ID)")
+			  .append(" WHERE o.C_BPartner_ID=bpl.C_BPartner_ID AND bpl.AD_Client_ID=o.AD_Client_ID")
+			  .append(" AND ((o.Address1 IS NULL AND l.Address1 IS NULL) OR o.Address1=l.Address1)")
+			  .append(" AND ((o.Address2 IS NULL AND l.Address2 IS NULL) OR o.Address2=l.Address2)")
+			  .append(" AND ((o.City IS NULL AND l.City IS NULL) OR o.City=l.City)")
+			  .append(" AND ((o.Postal IS NULL AND l.Postal IS NULL) OR o.Postal=l.Postal)")
+			  .append(" AND COALESCE(o.C_Region_ID,0)=COALESCE(l.C_Region_ID,0)")
+			  .append(" AND COALESCE(o.C_Country_ID,0)=COALESCE(l.C_Country_ID,0)) ")
+			  .append("WHERE C_BPartner_ID IS NOT NULL AND C_BPartner_Location_ID IS NULL")
+			  .append(" AND I_IsImported='N'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Found Location=" + no);
+		//	Set Bill Location from BPartner
+		sql = new StringBuilder ("UPDATE I_Order o ")
+			  .append("SET BillTo_ID=(SELECT MAX(C_BPartner_Location_ID) FROM C_BPartner_Location l")
+			  .append(" WHERE l.C_BPartner_ID=o.C_BPartner_ID AND o.AD_Client_ID=l.AD_Client_ID")
+			  .append(" AND ((l.IsBillTo='Y' AND o.IsSOTrx='Y') OR (l.IsPayFrom='Y' AND o.IsSOTrx='N'))")
+			  .append(") ")
+			  .append("WHERE C_BPartner_ID IS NOT NULL AND BillTo_ID IS NULL")
+			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set BP BillTo from BP=" + no);
+		//	Set Location from BPartner
+		sql = new StringBuilder ("UPDATE I_Order o ")
+			  .append("SET C_BPartner_Location_ID=(SELECT MAX(C_BPartner_Location_ID) FROM C_BPartner_Location l")
+			  .append(" WHERE l.C_BPartner_ID=o.C_BPartner_ID AND o.AD_Client_ID=l.AD_Client_ID")
+			  .append(" AND ((l.IsShipTo='Y' AND o.IsSOTrx='Y') OR o.IsSOTrx='N')")
+			  .append(") ")
+			  .append("WHERE C_BPartner_ID IS NOT NULL AND C_BPartner_Location_ID IS NULL")
+			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set BP Location from BP=" + no);
+		//
+		sql = new StringBuilder ("UPDATE I_Order ")
+			  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No BP Location, ' ")
+			  .append("WHERE C_BPartner_ID IS NOT NULL AND (BillTo_ID IS NULL OR C_BPartner_Location_ID IS NULL)")
+			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning ("No BP Location=" + no);
 
 		//	Set Country
 		/**
@@ -559,79 +563,33 @@ public class ImportOrder extends CustomProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			log.warning ("Invalid Tax=" + no);
-//David Castillo 17/10/2020 added saving of C_Activity, User1, UOM.
 		
+		//	David Castillo 17/10/2020 added saving of C_Activity, User1, UOM.
 		//UoM
 		sql = new StringBuilder ("UPDATE I_Order o ")
 				  .append("SET C_UoM_ID=(SELECT C_UoM_ID FROM C_UoM c")
 				  .append(" WHERE o.UoMName=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
 				  .append("WHERE C_UoM_ID IS NULL AND UoMName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (log.isLoggable(Level.FINE)) log.fine("Set UoM=" + no);
-			// Set proper error message
-			sql = new StringBuilder ("UPDATE I_ORDER i ")
-					.append("SET C_UOM_ID = (SELECT C_UOM_ID FROM C_UOM u WHERE u.X12DE355=i.X12DE355 AND u.AD_Client_ID IN (0,i.AD_Client_ID))")
-					.append("WHERE C_UOM_ID IS NULL AND X12DE355 IS NOT NULL")
-					.append(" AND I_IsImported<>'Y'").append(clientCheck);
-				no = DB.executeUpdate(sql.toString(), get_TrxName());
-				if (log.isLoggable(Level.INFO)) log.info("Set UOM=" + no);
-				//
-			sql = new StringBuilder ("UPDATE I_Order ")
-				  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found UOM, ' ")
-				  .append("WHERE C_UoM_ID IS NULL AND (UoMName IS NOT NULL OR X12DE355 IS NOT NULL) AND I_IsImported<>'Y'").append (clientCheck);
+		if (log.isLoggable(Level.FINE)) log.fine("Set UoM=" + no);
+		// Set proper error message
+		sql = new StringBuilder ("UPDATE I_ORDER i ")
+				.append("SET C_UOM_ID = (SELECT C_UOM_ID FROM C_UOM u WHERE u.X12DE355=i.X12DE355 AND u.AD_Client_ID IN (0,i.AD_Client_ID))")
+				.append("WHERE C_UOM_ID IS NULL AND X12DE355 IS NOT NULL")
+				.append(" AND I_IsImported<>'Y'").append(clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				log.warning("No UoM=" + no);
-			
-			//activity
-		/*	sql = new StringBuilder ("UPDATE I_Order o ")
-					  .append("SET C_Activity_ID=(SELECT C_Activity_ID FROM C_Activity c")
-					  .append(" WHERE o.ActivityName=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
-					  .append("WHERE C_Activity_ID IS NULL AND ActivityName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-				no = DB.executeUpdate(sql.toString(), get_TrxName());
-				if (log.isLoggable(Level.FINE)) log.fine("Set Activity=" + no);
-				// Set proper error message
-				sql = new StringBuilder ("UPDATE I_Order ")
-					  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=No Activity, ' ")
-					  .append("WHERE C_Activity_ID IS NULL AND ActivityName IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-				no = DB.executeUpdate(sql.toString(), get_TrxName());
-				if (no != 0)
-					log.warning("No Activity=" + no);
-				
-				//User1
-				sql = new StringBuilder ("UPDATE I_Order o ")
-						  .append("SET User1_ID=(SELECT C_ElementValue_ID FROM C_ElementValue c")
-						  .append(" WHERE o.User1Name=c.Name AND o.AD_Client_ID=c.AD_Client_ID) ")
-						  .append("WHERE User1_ID IS NULL AND User1Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-					no = DB.executeUpdate(sql.toString(), get_TrxName());
-					if (log.isLoggable(Level.FINE)) log.fine("Set User1=" + no);
-					// Set proper error message
-					sql = new StringBuilder ("UPDATE I_Order ")
-						  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found User1_ID, ' ")
-						  .append("WHERE User1_ID IS NULL AND User1Name IS NOT NULL AND I_IsImported<>'Y'").append (clientCheck);
-					no = DB.executeUpdate(sql.toString(), get_TrxName());
-					if (no != 0)
-						log.warning("No User1Name=" + no);
-					
-					// Set Conversion Type
-					sql = new StringBuilder ("UPDATE I_Order o ")
-							.append("SET C_ConversionType_ID=(SELECT C_ConversionType_ID FROM C_ConversionType a")
-							.append(" WHERE o.ConversionTypeValue=a.Value AND a.AD_Client_ID = o.AD_Client_ID) ")
-							.append(" WHERE C_ConversionType_ID IS NULL and ConversionTypeValue IS NOT NULL")
-							.append(" AND I_IsImported<>'Y'").append (clientCheck);
-					no = DB.executeUpdate(sql.toString(), get_TrxName());
-					log.fine("Set C_ConversionType_ID=" + no);
-					sql = new StringBuilder ("UPDATE I_Order ")
-							.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid ConversionTypeValue, ' ")
-							.append("WHERE C_ConversionType_ID IS NULL AND (ConversionTypeValue IS NOT NULL)")
-							.append(" AND I_IsImported<>'Y' ").append (clientCheck);
-					no = DB.executeUpdate(sql.toString(), get_TrxName());
-					if (no != 0)
-						log.warning ("Invalid ConversionTypeValue=" + no);*/
+			if (log.isLoggable(Level.INFO)) log.info("Set UOM=" + no);
+			//
+		sql = new StringBuilder ("UPDATE I_Order ")
+			  .append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Not Found UOM, ' ")
+			  .append("WHERE C_UoM_ID IS NULL AND (UoMName IS NOT NULL OR X12DE355 IS NOT NULL) AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning("No UoM=" + no);
+		
 		commitEx();
 		
 		//	-- New BPartner ---------------------------------------------------
-
 		//	Go through Order Records w/o C_BPartner_ID
 		sql = new StringBuilder ("SELECT * FROM I_Order ")
 			  .append("WHERE I_IsImported='N' AND C_BPartner_ID IS NULL").append (clientCheck);
@@ -914,8 +872,6 @@ public class ImportOrder extends CustomProcess
 					line.setC_Activity_ID(imp.getC_Activity_ID());
 				if (imp.get_ValueAsInt("AD_User1") != 0)
 					line.setUser1_ID(imp.get_ValueAsInt("AD_User1"));
-				
-				
 				
 				line.saveEx();
 				imp.setC_OrderLine_ID(line.getC_OrderLine_ID());
