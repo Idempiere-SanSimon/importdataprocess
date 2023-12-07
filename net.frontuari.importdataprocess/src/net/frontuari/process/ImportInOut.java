@@ -46,6 +46,8 @@ public class ImportInOut extends CustomProcess {
 	private boolean			m_deleteOldImported = false;
 	/**	Only validate, don't import		*/
 	private boolean			p_IsValidateOnly = false;
+	/**	Document Action		*/
+	private String			p_DocAction = MInOut.ACTION_Prepare;
 
 	public ImportInOut() {
 	}
@@ -65,6 +67,8 @@ public class ImportInOut extends CustomProcess {
 				p_IsValidateOnly = para[i].getParameterAsBoolean();
 			else if (name.equals("DeleteOldImported"))
 				m_deleteOldImported = "Y".equals(para[i].getParameter());
+			else if (name.equals("DocAction"))
+				p_DocAction = para[i].getParameterAsString();
 			else
 				log.log(Level.SEVERE, "Unknown Parameter: " + name);
 		}
@@ -260,6 +264,14 @@ public class ImportInOut extends CustomProcess {
 			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Set BP from Value=" + no);
+		//	BP from TaxID
+		sql = new StringBuilder ("UPDATE I_InOut o ")
+			  .append("SET C_BPartner_ID=(SELECT MAX(C_BPartner_ID) FROM C_BPartner bp")
+			  .append(" WHERE o.BPTaxID=bp.TaxID AND o.AD_Client_ID=bp.AD_Client_ID) ")
+			  .append("WHERE C_BPartner_ID IS NULL AND BPTaxID IS NOT NULL")
+			  .append(" AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set BP from TaxID=" + no);
 		//	Default BP
 		sql = new StringBuilder ("UPDATE I_InOut o ")
 			  .append("SET C_BPartner_ID=(SELECT C_BPartnerCashTrx_ID FROM AD_ClientInfo c")
@@ -435,6 +447,15 @@ public class ImportInOut extends CustomProcess {
 				if (!oldDocumentNo.equals(cmpDocumentNo))
 				{
 					
+					if(io!=null && p_DocAction.equals(MInOut.ACTION_Complete)) {
+						if(!io.processIt(p_DocAction)) {
+							log.saveError("Error", io.getProcessMsg());
+						}
+						io.saveEx();
+						commitEx();
+						io = null;
+					}
+					
 					oldDocumentNo = imp.getDocumentNo();
 					if (oldDocumentNo == null)
 						oldDocumentNo = "";
@@ -530,6 +551,14 @@ public class ImportInOut extends CustomProcess {
 				//
 				if (imp.save())
 					noInsertLine++;
+			}
+			if(io!=null && p_DocAction.equals(MInOut.ACTION_Complete)) {
+				if(!io.processIt(p_DocAction)) {
+					log.saveError("Error", io.getProcessMsg());
+				}
+				io.saveEx();
+				commitEx();
+				io = null;
 			}
 		}
 		catch (Exception e)
