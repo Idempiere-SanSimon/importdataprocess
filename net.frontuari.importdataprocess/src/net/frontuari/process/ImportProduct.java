@@ -121,7 +121,7 @@ public class ImportProduct extends CustomProcess implements ImportProcess
 		//	Delete Old Imported
 		if (m_deleteOldImported)
 		{
-			sql = new StringBuilder ("DELETE I_Product ")
+			sql = new StringBuilder ("DELETE FROM I_Product ")
 				.append("WHERE I_IsImported='Y'").append(clientCheck);
 			no = DB.executeUpdate(sql.toString(), get_TrxName());
 			if (log.isLoggable(Level.INFO)) log.info("Delete Old Imported =" + no);
