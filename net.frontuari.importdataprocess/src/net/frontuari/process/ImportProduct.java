@@ -501,6 +501,7 @@ public class ImportProduct extends CustomProcess implements ImportProcess
 					if(imp.get_ValueAsInt("FTU_ProductGroup_ID")>0)
 						product.set_ValueOfColumn("FTU_ProductGroup_ID", imp.get_ValueAsInt("FTU_ProductGroup_ID"));
 					
+					product.setC_UOM_ID(imp.getC_UOM_ID());
 					
 					ModelValidationEngine.get().fireImportValidate(this, imp, product, ImportValidator.TIMING_AFTER_IMPORT);
 					if (product.save())
@@ -525,12 +526,12 @@ public class ImportProduct extends CustomProcess implements ImportProcess
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
 						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, Updated,UpdatedBy,C_TaxCategory_ID,Group1,Group2,IsStocked"
-								+ ",IsBOM,IsPurchased,IsSold,IsManufactured)= ")
+								+ ",IsBOM,IsPurchased,IsSold,IsManufactured,FTU_ProductGroup_ID)= ")
 						.append("(SELECT Value,Name,Description,DocumentNote,Help,")
 						.append("UPC,SKU,C_UOM_ID,M_Product_Category_ID,Classification,ProductType,")
 						.append("Volume,Weight,ShelfWidth,ShelfHeight,ShelfDepth,UnitsPerPallet,")
 						.append("Discontinued,DiscontinuedBy, DiscontinuedAt, SysDate,UpdatedBy,C_TaxCategory_ID,Group1,Group2,IsStocked"
-								+ ",IsBOM,IsPurchased,IsSold,IsManufactured")
+								+ ",IsBOM,IsPurchased,IsSold,IsManufactured,FTU_ProductGroup_ID")
 						.append(" FROM I_Product WHERE I_Product_ID=").append(I_Product_ID).append(") ")
 						.append("WHERE M_Product_ID=").append(M_Product_ID);
 					PreparedStatement pstmt_updateProduct = DB.prepareStatement
