@@ -36,6 +36,7 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.DB;
 
 import net.frontuari.base.CustomProcess;
+import net.frontuari.custom.model.MFTUProductGroup;
 
 
 /**
@@ -211,67 +212,7 @@ public class ImportProduct extends CustomProcess implements ImportProcess
 		if (log.isLoggable(Level.INFO)) log.info("Set Category=" + no);
 
 		
-		//	Copy From Product if Import does not have value
-		for (int i = 0; i < strFieldsToCopy.length; i++)
-		{
-			sql = new StringBuilder ("UPDATE I_Product i ")
-				.append("SET ").append(strFieldsToCopy[i]).append(" = (SELECT ").append(strFieldsToCopy[i]).append(" FROM M_Product p")
-				.append(" WHERE i.M_Product_ID=p.M_Product_ID AND i.AD_Client_ID=p.AD_Client_ID) ")
-				.append("WHERE M_Product_ID IS NOT NULL")
-				.append(" AND ").append(strFieldsToCopy[i]).append(" IS NULL")
-				.append(" AND I_IsImported='N'").append(clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				if (log.isLoggable(Level.FINE)) log.fine(strFieldsToCopy[i] + " - default from existing Product=" + no);
-		}
-		String[] numFields = new String[] {"C_UOM_ID","M_Product_Category_ID",
-			"Volume","Weight","ShelfWidth","ShelfHeight","ShelfDepth","UnitsPerPallet"};
-		for (int i = 0; i < numFields.length; i++)
-		{
-			sql = new StringBuilder ("UPDATE I_PRODUCT i ")
-				.append("SET ").append(numFields[i]).append(" = (SELECT ").append(numFields[i]).append(" FROM M_Product p")
-				.append(" WHERE i.M_Product_ID=p.M_Product_ID AND i.AD_Client_ID=p.AD_Client_ID) ")
-				.append("WHERE M_Product_ID IS NOT NULL")
-				.append(" AND (").append(numFields[i]).append(" IS NULL OR ").append(numFields[i]).append("=0)")
-				.append(" AND I_IsImported='N'").append(clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				if (log.isLoggable(Level.FINE)) log.fine(numFields[i] + " default from existing Product=" + no);
-		}
-
-		//	Copy From Product_PO if Import does not have value
-		String[] strFieldsPO = new String[] {"UPC",
-			"PriceEffective","VendorProductNo","VendorCategory","Manufacturer",
-			"Discontinued","DiscontinuedBy", "DiscontinuedAt"};
-		for (int i = 0; i < strFieldsPO.length; i++)
-		{
-			sql = new StringBuilder ("UPDATE I_PRODUCT i ")
-				.append("SET ").append(strFieldsPO[i]).append(" = (SELECT ").append(strFieldsPO[i])
-				.append(" FROM M_Product_PO p")
-				.append(" WHERE i.M_Product_ID=p.M_Product_ID AND i.C_BPartner_ID=p.C_BPartner_ID AND i.AD_Client_ID=p.AD_Client_ID) ")
-				.append("WHERE M_Product_ID IS NOT NULL AND C_BPartner_ID IS NOT NULL")
-				.append(" AND ").append(strFieldsPO[i]).append(" IS NULL")
-				.append(" AND I_IsImported='N'").append(clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				if (log.isLoggable(Level.FINE)) log.fine(strFieldsPO[i] + " default from existing Product PO=" + no);
-		}
-		String[] numFieldsPO = new String[] {"C_UOM_ID","C_Currency_ID",
-			"PriceList","PricePO","RoyaltyAmt",
-			"Order_Min","Order_Pack","CostPerOrder","DeliveryTime_Promised"};
-		for (int i = 0; i < numFieldsPO.length; i++)
-		{
-			sql = new StringBuilder ("UPDATE I_PRODUCT i ")
-				.append("SET ").append(numFieldsPO[i]).append(" = (SELECT ").append(numFieldsPO[i])
-				.append(" FROM M_Product_PO p")
-				.append(" WHERE i.M_Product_ID=p.M_Product_ID AND i.C_BPartner_ID=p.C_BPartner_ID AND i.AD_Client_ID=p.AD_Client_ID) ")
-				.append("WHERE M_Product_ID IS NOT NULL AND C_BPartner_ID IS NOT NULL")
-				.append(" AND (").append(numFieldsPO[i]).append(" IS NULL OR ").append(numFieldsPO[i]).append("=0)")
-				.append(" AND I_IsImported='N'").append(clientCheck);
-			no = DB.executeUpdate(sql.toString(), get_TrxName());
-			if (no != 0)
-				if (log.isLoggable(Level.FINE)) log.fine(numFieldsPO[i] + " default from existing Product PO=" + no);
-		}
+		
 
 		//	Invalid Category
 		sql = new StringBuilder ("UPDATE I_Product ")
@@ -415,6 +356,68 @@ public class ImportProduct extends CustomProcess implements ImportProcess
 			if (no != 0)
 				log.warning("Invalid Product Group=" + no);
 			
+//			Copy From Product if Import does not have value
+			for (int i = 0; i < strFieldsToCopy.length; i++)
+			{
+				sql = new StringBuilder ("UPDATE I_Product i ")
+					.append("SET ").append(strFieldsToCopy[i]).append(" = (SELECT ").append(strFieldsToCopy[i]).append(" FROM M_Product p")
+					.append(" WHERE i.M_Product_ID=p.M_Product_ID AND i.AD_Client_ID=p.AD_Client_ID) ")
+					.append("WHERE M_Product_ID IS NOT NULL")
+					.append(" AND ").append(strFieldsToCopy[i]).append(" IS NULL")
+					.append(" AND I_IsImported='N'").append(clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+					if (log.isLoggable(Level.FINE)) log.fine(strFieldsToCopy[i] + " - default from existing Product=" + no);
+			}
+			String[] numFields = new String[] {"C_UOM_ID","M_Product_Category_ID",
+				"Volume","Weight","ShelfWidth","ShelfHeight","ShelfDepth","UnitsPerPallet"};
+			for (int i = 0; i < numFields.length; i++)
+			{
+				sql = new StringBuilder ("UPDATE I_PRODUCT i ")
+					.append("SET ").append(numFields[i]).append(" = (SELECT ").append(numFields[i]).append(" FROM M_Product p")
+					.append(" WHERE i.M_Product_ID=p.M_Product_ID AND i.AD_Client_ID=p.AD_Client_ID) ")
+					.append("WHERE M_Product_ID IS NOT NULL")
+					.append(" AND (").append(numFields[i]).append(" IS NULL OR ").append(numFields[i]).append("=0)")
+					.append(" AND I_IsImported='N'").append(clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+					if (log.isLoggable(Level.FINE)) log.fine(numFields[i] + " default from existing Product=" + no);
+			}
+
+			//	Copy From Product_PO if Import does not have value
+			String[] strFieldsPO = new String[] {"UPC",
+				"PriceEffective","VendorProductNo","VendorCategory","Manufacturer",
+				"Discontinued","DiscontinuedBy", "DiscontinuedAt"};
+			for (int i = 0; i < strFieldsPO.length; i++)
+			{
+				sql = new StringBuilder ("UPDATE I_PRODUCT i ")
+					.append("SET ").append(strFieldsPO[i]).append(" = (SELECT ").append(strFieldsPO[i])
+					.append(" FROM M_Product_PO p")
+					.append(" WHERE i.M_Product_ID=p.M_Product_ID AND i.C_BPartner_ID=p.C_BPartner_ID AND i.AD_Client_ID=p.AD_Client_ID) ")
+					.append("WHERE M_Product_ID IS NOT NULL AND C_BPartner_ID IS NOT NULL")
+					.append(" AND ").append(strFieldsPO[i]).append(" IS NULL")
+					.append(" AND I_IsImported='N'").append(clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+					if (log.isLoggable(Level.FINE)) log.fine(strFieldsPO[i] + " default from existing Product PO=" + no);
+			}
+			String[] numFieldsPO = new String[] {"C_UOM_ID","C_Currency_ID",
+				"PriceList","PricePO","RoyaltyAmt",
+				"Order_Min","Order_Pack","CostPerOrder","DeliveryTime_Promised"};
+			for (int i = 0; i < numFieldsPO.length; i++)
+			{
+				sql = new StringBuilder ("UPDATE I_PRODUCT i ")
+					.append("SET ").append(numFieldsPO[i]).append(" = (SELECT ").append(numFieldsPO[i])
+					.append(" FROM M_Product_PO p")
+					.append(" WHERE i.M_Product_ID=p.M_Product_ID AND i.C_BPartner_ID=p.C_BPartner_ID AND i.AD_Client_ID=p.AD_Client_ID) ")
+					.append("WHERE M_Product_ID IS NOT NULL AND C_BPartner_ID IS NOT NULL")
+					.append(" AND (").append(numFieldsPO[i]).append(" IS NULL OR ").append(numFieldsPO[i]).append("=0)")
+					.append(" AND I_IsImported='N'").append(clientCheck);
+				no = DB.executeUpdate(sql.toString(), get_TrxName());
+				if (no != 0)
+					if (log.isLoggable(Level.FINE)) log.fine(numFieldsPO[i] + " default from existing Product PO=" + no);
+			}
+			
 		//	Get Default Tax Category
 		int C_TaxCategory_ID = 0;
 		PreparedStatement pstmt = null;
@@ -498,11 +501,37 @@ public class ImportProduct extends CustomProcess implements ImportProcess
 					product.setIsPurchased(imp.get_ValueAsBoolean("IsPurchased"));
 					product.setIsSold(imp.get_ValueAsBoolean("IsSold"));
 					product.setIsManufactured(imp.get_ValueAsBoolean("IsManufactured"));
-					if(imp.get_ValueAsInt("FTU_ProductGroup_ID")>0)
+					if(imp.get_ValueAsInt("FTU_ProductGroup_ID")>0) {
 						product.set_ValueOfColumn("FTU_ProductGroup_ID", imp.get_ValueAsInt("FTU_ProductGroup_ID"));
-					
-					product.setC_UOM_ID(imp.getC_UOM_ID());
-					
+						
+						MFTUProductGroup Group = new MFTUProductGroup(getCtx(), imp.get_ValueAsInt("FTU_ProductGroup_ID"), get_TrxName());
+						if (Group.isAutoSequence()) {
+								//	Added by David Castillo 29/01/2024
+								//	Support for write Group Value in Product Value
+								String GroupValue = (Group.isUseGroupValue() ? Group.getValue() : "");
+								StringBuilder ProdValue = new StringBuilder(GroupValue);
+								int SeqNoNew = 0;
+								if (Group.getSeqNo() <= 0 ) {
+									SeqNoNew = Group.getIncrementNo();
+								} else{
+									SeqNoNew = Group.getSeqNo() + Group.getIncrementNo() ;
+								}
+								String SeqNo = "" + SeqNoNew ;
+								if(Group.getDecimalPattern() != null)
+								{
+									String Value = Group.getDecimalPattern().substring(SeqNo.length());
+									ProdValue.append(Value + SeqNo);
+									product.setValue(ProdValue.toString());
+								}else {
+									ProdValue.append(SeqNo);
+									product.setValue(ProdValue.toString());
+								}
+								Group.setSeqNo(Integer.parseInt(SeqNo));
+								Group.save();
+								//	End David Castillo
+
+						}
+					}
 					ModelValidationEngine.get().fireImportValidate(this, imp, product, ImportValidator.TIMING_AFTER_IMPORT);
 					if (product.save())
 					{
@@ -536,6 +565,8 @@ public class ImportProduct extends CustomProcess implements ImportProcess
 						.append("WHERE M_Product_ID=").append(M_Product_ID);
 					PreparedStatement pstmt_updateProduct = DB.prepareStatement
 						(sqlt.toString(), get_TrxName());
+					
+					log.log(Level.SEVERE, sqlt.toString());
 
 					try
 					{
