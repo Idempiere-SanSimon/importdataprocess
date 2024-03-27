@@ -3,7 +3,8 @@ Bundle-Category: idempiere-plugin
 Bundle-ManifestVersion: 2
 Bundle-Name: Import Data Process
 Bundle-SymbolicName: net.frontuari.importdataprocess
-Bundle-Version: 10.0.0.qualifier
+Automatic-Module-Name: net.frontuari.importdataprocess
+Bundle-Version: 11.0.0.qualifier
 Bundle-Vendor: Frontuari, C.A. <https://frontuari.net>
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.apache.commons.lang3,
@@ -28,4 +29,3 @@ Service-Component: OSGI-INF/ModelFactory.xml,
 Bundle-ClassPath: .,
  lib/freemarker.jar
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
-Automatic-Module-Name: net.frontuari.importdataprocess

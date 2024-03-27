@@ -13,13 +13,13 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2023 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2024 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
  */
 
-package net.frontuari.util;
+package net.frontuari.importdataprocess.util;
 
-import static net.frontuari.test.util.RandomTestUtil.*;
-import static net.frontuari.test.util.ReflectionTestUtil.*;
+import static net.frontuari.importdataprocess.test.util.RandomTestUtil.*;
+import static net.frontuari.importdataprocess.test.util.ReflectionTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -410,7 +410,7 @@ class KeyValueLoggerTest {
 	void shouldPrintClassFromClass() {
 		keyValueLogger.javaClass(KeyValueLogger.class).info();
 
-		verifyStringLog(Level.INFO, "class=\"net.frontuari.util.KeyValueLogger\"");
+		verifyStringLog(Level.INFO, "class=\"net.frontuari.importdataprocess.util.KeyValueLogger\"");
 	}
 
 	@Test
@@ -431,7 +431,7 @@ class KeyValueLoggerTest {
 	void shouldPrintPackageFromClass() {
 		keyValueLogger.javaPackage(KeyValueLogger.class).info();
 
-		verifyStringLog(Level.INFO, "package=\"net.frontuari.util\"");
+		verifyStringLog(Level.INFO, "package=\"net.frontuari.importdataprocess.util\"");
 	}
 
 	@Test
@@ -452,7 +452,7 @@ class KeyValueLoggerTest {
 	void shouldPrintPackageFromPackage() {
 		keyValueLogger.javaPackage(KeyValueLogger.class.getPackage()).info();
 
-		verifyStringLog(Level.INFO, "package=\"net.frontuari.util\"");
+		verifyStringLog(Level.INFO, "package=\"net.frontuari.importdataprocess.util\"");
 	}
 
 	@Test

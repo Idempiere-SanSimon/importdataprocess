@@ -4,28 +4,28 @@
 
 - New callout
     * Name: CName
-    * Package: net.frontuari.callout
-    * Example: net.frontuari.callout.CStringFormat
+    * Package: net.frontuari.importdataprocess.callout
+    * Example: net.frontuari.importdataprocess.callout.CStringFormat
 
 - New process
     * Name: PName
-    * Package: net.frontuari.process
-    * Example: net.frontuari.process.PGenerateWithholding
+    * Package: net.frontuari.importdataprocess.process
+    * Example: net.frontuari.importdataprocess.process.PGenerateWithholding
 
 - New form
     * Name: FName
-    * Package: net.frontuari.form
-    * Example: net.frontuari.form.FMultiPayment
+    * Package: net.frontuari.importdataprocess.form
+    * Example: net.frontuari.importdataprocess.form.FMultiPayment
 
 - New event
     * Name: EName
-    * Package: net.frontuari.event
-    * Example: net.frontuari.event.EAfterCompleteInvoice
+    * Package: net.frontuari.importdataprocess.event
+    * Example: net.frontuari.importdataprocess.event.EAfterCompleteInvoice
 
 - New model (extends class X)
     * Name: MName
-    * Package: net.frontuari.model
-    * Example: net.frontuari.model.MTableExample
+    * Package: net.frontuari.importdataprocess.model
+    * Example: net.frontuari.importdataprocess.model.MTableExample
 
 ## Folder estructure
 
@@ -53,7 +53,7 @@
         |   |_ModelFactory.xml
         |   |_ProcessFactory.xml
         |_src
-            |_net.frontuari
+            |_net.frontuari.importdataprocess
                 |_base (plugin core)
                 |   |_BundleInfo.java (gets plugin information dynamically)
                 |   |_CustomCallout.java (IColumnCallout implementation)
@@ -84,23 +84,23 @@
 ### Components
 
 - New callout
-    * Create callout in package `net.frontuari.callout`, extends from `CustomCallout`
+    * Create callout in package `net.frontuari.importdataprocess.callout`, extends from `CustomCallout`
     * Annotate it with the `@Callout` annotation at class level
 
 - New process
-    * Create process in package `net.frontuari.process`, extends from `CustomProcess`
+    * Create process in package `net.frontuari.importdataprocess.process`, extends from `CustomProcess`
     * Annotate it with the `@Process` annotation at class level
 
 - New form
-    * Create form in package `net.frontuari.form`, extends from `CustomForm`
+    * Create form in package `net.frontuari.importdataprocess.form`, extends from `CustomForm`
     * Annotate it with the `@Form` annotation at class level
 
 - New event
-    * Create event in package `net.frontuari.event`, extends from `CustomEvent`
+    * Create event in package `net.frontuari.importdataprocess.event`, extends from `CustomEvent`
     * Annotate it with the `@EventTopicDelegate` annotation at class level
 
 - New model (extends form class X)
-    * Create model in package `net.frontuari.model`, extends class `X`. Example: `X_TL_TableExample -> MTableExample`
+    * Create model in package `net.frontuari.importdataprocess.model`, extends class `X`. Example: `X_TL_TableExample -> MTableExample`
     * Annotate it with the `@Model` annotation at class level
     * More information
         * https://wiki.idempiere.org/en/Developing_Plug-Ins_-_IModelFactory

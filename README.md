@@ -1,7 +1,7 @@
 # Import Data Process
 
-- Copyright: 2023 Frontuari, C.A. <https://frontuari.net>
-- Repository: https://github.com/Frontuari/importdataprocess
+- Copyright: 2024 Frontuari, C.A. <https://frontuari.net>
+- Repository: https://github.com/Frontuari/net.frontuari.importdataprocess
 - License: GPL 2
 
 ## Description
@@ -20,8 +20,8 @@ Put the plugin description here
 
 ## Prerequisites
 
-- Java 11, commands `java` and `javac`.
-- iDempiere 10.0.0
+- Java 17, commands `java` and `javac`.
+- iDempiere 11.0.0
 - Set `IDEMPIERE_REPOSITORY` env variable
 
 ## Features/Documentation

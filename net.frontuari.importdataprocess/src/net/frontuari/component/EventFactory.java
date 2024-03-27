@@ -13,7 +13,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2023 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2024 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
  */
 
 package net.frontuari.component;
@@ -27,7 +27,7 @@ public class EventFactory extends AnnotationBasedEventManager {
 
 	@Override
 	public String[] getPackages() {
-		return new String[] { "net.frontuari.event" };
+		return new String[] { "net.frontuari.importdataprocess.event" };
 	}
 
 }

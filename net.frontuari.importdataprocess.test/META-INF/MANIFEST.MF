@@ -2,7 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Import Data Process Test
 Bundle-SymbolicName: net.frontuari.importdataprocess.test
-Bundle-Version: 10.0.0.qualifier
+Automatic-Module-Name: net.frontuari.importdataprocess
+Bundle-Version: 11.0.0.qualifier
 Bundle-Vendor: Frontuari, C.A. <https://frontuari.net>
 Fragment-Host: net.frontuari.importdataprocess
 Bundle-ClassPath: .,

@@ -13,12 +13,12 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2023 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2024 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
  */
 
-package net.frontuari.util;
+package net.frontuari.importdataprocess.util;
 
-import static net.frontuari.test.util.RandomTestUtil.*;
+import static net.frontuari.importdataprocess.test.util.RandomTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
