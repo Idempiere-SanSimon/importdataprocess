@@ -27,7 +27,7 @@ public class FormFactory extends AnnotationBasedFormFactory {
 
 	@Override
 	protected String[] getPackages() {
-		return new String[] { "net.frontuari.importdataprocess.form" };
+		return new String[] { "net.frontuari.form" };
 	}
 
 }

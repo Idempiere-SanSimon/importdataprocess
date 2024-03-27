@@ -27,7 +27,7 @@ public class ModelFactory extends AnnotationBasedModelFactory {
 
 	@Override
 	protected String[] getPackages() {
-		return new String[] { "net.frontuari.importdataprocess.model" };
+		return new String[] { "net.frontuari.model" };
 	}
 
 }

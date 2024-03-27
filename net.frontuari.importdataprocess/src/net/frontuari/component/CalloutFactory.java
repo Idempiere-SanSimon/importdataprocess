@@ -27,7 +27,7 @@ public class CalloutFactory extends AnnotationBasedColumnCalloutFactory {
 
 	@Override
 	protected String[] getPackages() {
-		return new String[] {"net.frontuari.importdataprocess.model", "net.frontuari.importdataprocess.callout"};
+		return new String[] {"net.frontuari.model", "net.frontuari.callout"};
 	}
 
 }

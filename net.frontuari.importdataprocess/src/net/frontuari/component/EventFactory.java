@@ -27,7 +27,7 @@ public class EventFactory extends AnnotationBasedEventManager {
 
 	@Override
 	public String[] getPackages() {
-		return new String[] { "net.frontuari.importdataprocess.event" };
+		return new String[] { "net.frontuari.event" };
 	}
 
 }

@@ -27,7 +27,7 @@ public class ProcessFactory extends AnnotationBasedProcessFactory {
 
 	@Override
 	protected String[] getPackages() {
-		return new String[] { "net.frontuari.importdataprocess.process" };
+		return new String[] { "net.frontuari.process" };
 	}
 
 }
