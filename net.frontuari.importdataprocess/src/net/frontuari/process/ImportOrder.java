@@ -736,7 +736,7 @@ public class ImportOrder extends CustomProcess
 		//	Go through Order Records w/o
 		sql = new StringBuilder ("SELECT * FROM I_Order ")
 			  .append("WHERE I_IsImported='N'").append (clientCheck)
-			.append(" ORDER BY AD_Org_ID,C_BPartner_ID,C_DocType_ID,DocumentNo, BillTo_ID, C_BPartner_Location_ID, I_Order_ID");
+			.append(" ORDER BY AD_Org_ID,C_BPartner_ID,C_DocType_ID,DocumentNo,C_Currency_ID, BillTo_ID, C_BPartner_Location_ID, I_Order_ID");
 		try
 		{
 			pstmt = DB.prepareStatement (sql.toString(), get_TrxName());
@@ -745,6 +745,7 @@ public class ImportOrder extends CustomProcess
 			int oldC_BPartner_ID = 0;
 			int oldBillTo_ID = 0;
 			int oldC_BPartner_Location_ID = 0;
+			int oldCurrency_ID = 0;
 			String oldDocumentNo = "";
 			//
 			MOrder order = null;
@@ -759,6 +760,7 @@ public class ImportOrder extends CustomProcess
 				if (oldC_BPartner_ID != imp.getC_BPartner_ID() 
 					|| oldC_BPartner_Location_ID != imp.getC_BPartner_Location_ID()
 					|| oldBillTo_ID != imp.getBillTo_ID() 
+					|| oldCurrency_ID != imp.getC_Currency_ID() 
 					|| !oldDocumentNo.equals(cmpDocumentNo))
 				{
 					if (order != null)
@@ -777,6 +779,7 @@ public class ImportOrder extends CustomProcess
 					oldC_BPartner_ID = imp.getC_BPartner_ID();
 					oldC_BPartner_Location_ID = imp.getC_BPartner_Location_ID();
 					oldBillTo_ID = imp.getBillTo_ID();
+					oldCurrency_ID = imp.getC_Currency_ID();
 					oldDocumentNo = imp.getDocumentNo();
 					if (oldDocumentNo == null)
 						oldDocumentNo = "";
