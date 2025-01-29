@@ -887,12 +887,13 @@ public class ImportInvoice extends CustomProcess
 					if (invoice != null)
 					{//dont process if m_docAction is empty
 						if (!m_docAction.equals("")) {
-						if (!invoice.processIt(m_docAction)) {
-							log.warning("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
-							throw new IllegalStateException("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
-						}	
+							if (!invoice.processIt(m_docAction)) {
+								log.warning("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
+								throw new IllegalStateException("Invoice Process Failed: " + invoice + " - " + invoice.getProcessMsg());
+							}
+							invoice.saveEx();
+							commitEx();
 						}
-						invoice.saveEx();
 					}
 					//	Group Change
 					oldC_BPartner_ID = imp.getC_BPartner_ID();
@@ -978,8 +979,8 @@ public class ImportInvoice extends CustomProcess
 					{
 						MInOut io = new MInOut(getCtx(), imp.get_ValueAsInt("M_InOut_ID"), get_TrxName());
 						if (io.getC_Order_ID() > 0) {
-						imp.set_ValueOfColumn("C_Order_ID", io.getC_Order_ID());
-						imp.saveEx();
+							imp.set_ValueOfColumn("C_Order_ID", io.getC_Order_ID());
+							imp.saveEx();
 						}
 					}
 					if(imp.get_ValueAsInt("C_Order_ID") > 0)
