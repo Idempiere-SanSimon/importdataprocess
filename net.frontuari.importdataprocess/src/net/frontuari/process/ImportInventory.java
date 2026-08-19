@@ -28,13 +28,17 @@ import org.adempiere.model.ImportValidator;
 import org.adempiere.process.ImportProcess;
 import org.compiere.model.I_C_DocType;
 import org.compiere.model.MAcctSchema;
+import org.compiere.model.MAttribute;
 import org.compiere.model.MAttributeSet;
 import org.compiere.model.MAttributeSetInstance;
+import org.compiere.model.MAttributeValue;
 import org.compiere.model.MCost;
 import org.compiere.model.MInventory;
 import org.compiere.model.MInventoryLine;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategoryAcct;
+import org.compiere.model.MRefTable;
+import org.compiere.model.MTable;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.PO;
 import org.compiere.model.X_I_Inventory;
@@ -540,17 +544,79 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 
 	protected int generateASI(MProduct product,X_I_Inventory imp){
 		int M_AttributeSetInstance_ID = 0;
-		if ((imp.getLot() != null && imp.getLot().length() > 0) || (imp.getSerNo() != null && imp.getSerNo().length() > 0))
+		String attributeValue = imp.get_ValueAsString("AttributeValue");
+		boolean hasLot = imp.getLot() != null && imp.getLot().trim().length() > 0;
+		boolean hasSerNo = imp.getSerNo() != null && imp.getSerNo().trim().length() > 0;
+		boolean hasAttributeValue = attributeValue != null && attributeValue.trim().length() > 0;
+
+		if (hasLot || hasSerNo || hasAttributeValue)
 		{
 			
 			if (product.isInstanceAttribute())
 			{
 				MAttributeSet mas = product.getAttributeSet();
 				MAttributeSetInstance masi = new MAttributeSetInstance(getCtx(), 0, mas.getM_AttributeSet_ID(), get_TrxName());
-				if (mas.isLot() && imp.getLot() != null)
+				if (mas.isLot() && hasLot)
 					masi.setLot(imp.getLot(), imp.getM_Product_ID());
-				if (mas.isSerNo() && imp.getSerNo() != null)
+				if (mas.isSerNo() && hasSerNo)
 					masi.setSerNo(imp.getSerNo());
+				
+				if (hasAttributeValue) {
+					masi.saveEx(); // Save first to generate M_AttributeSetInstance_ID
+					MAttribute[] attributes = mas.getMAttributes(true);
+					if (attributes != null) {
+						for (MAttribute attribute : attributes) {
+							if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(attribute.getAttributeValueType())) {
+								MAttributeValue[] values = attribute.getMAttributeValues();
+								if (values != null) {
+									for (MAttributeValue val : values) {
+										if (attributeValue.equalsIgnoreCase(val.getValue()) || attributeValue.equalsIgnoreCase(val.getName())) {
+											attribute.setMAttributeInstance(masi.getM_AttributeSetInstance_ID(), val);
+											break;
+										}
+									}
+								}
+							} else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attribute.getAttributeValueType())) {
+								int refValueId = attribute.getAD_Reference_Value_ID();
+								if (refValueId > 0) {
+									MRefTable refTable = MRefTable.get(getCtx(), refValueId, get_TrxName());
+									if (refTable != null && refTable.getAD_Table_ID() > 0) {
+										MTable table = MTable.get(getCtx(), refTable.getAD_Table_ID());
+										String[] searchCols = {"Name", "Value", "TaxID", "DocumentNo"};
+										StringBuilder where = new StringBuilder();
+										java.util.List<Object> params = new java.util.ArrayList<Object>();
+										for (String col : searchCols) {
+											if (table.getColumn(col) != null) {
+												if (where.length() > 0) where.append(" OR ");
+												where.append("UPPER(").append(col).append(") = UPPER(?)");
+												params.add(attributeValue);
+											}
+										}
+										if (where.length() > 0) {
+											String pkColName = table.getTableName() + "_ID";
+											org.compiere.model.MColumn keyCol = org.compiere.model.MColumn.get(getCtx(), refTable.getAD_Key());
+											if (keyCol != null) {
+												pkColName = keyCol.getColumnName();
+											}
+											String sqlRef = "SELECT " + pkColName + " FROM " + table.getTableName() + " WHERE " + where.toString();
+											int recordId = DB.getSQLValue(get_TrxName(), sqlRef, params);
+											if (recordId > 0) {
+												attribute.setMAttributeInstance(masi.getM_AttributeSetInstance_ID(), recordId);
+											} else {
+												log.warning("No se ha encontrado el valor de referencia para " + attributeValue + " en la tabla " + table.getTableName());
+											}
+										} else {
+											log.severe("No se ha encontrado ninguna columna de búsqueda (Nombre, Código, RIF, No Documento) para la tabla de referencia" + table.getTableName() + " por atributo" + attribute.getName());
+										}
+									}
+								}
+							} else if (MAttribute.ATTRIBUTEVALUETYPE_StringMax40.equals(attribute.getAttributeValueType())) {
+								attribute.setMAttributeInstance(masi.getM_AttributeSetInstance_ID(), attributeValue);
+							}
+						}
+					}
+				}
+
 				masi.setDescription();
 				masi.saveEx();
 				M_AttributeSetInstance_ID = masi.getM_AttributeSetInstance_ID();
