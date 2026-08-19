@@ -455,6 +455,8 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 				}else {
 					 M_AttributeSetInstance_ID = generateASI(product,imp);
 				}
+				imp.set_ValueNoCheck("M_AttributeSetInstance_ID", M_AttributeSetInstance_ID);
+				imp.saveEx();
 
 				MInventoryLine line = new MInventoryLine (inventory, 
 					imp.getM_Locator_ID(), imp.getM_Product_ID(), M_AttributeSetInstance_ID,
