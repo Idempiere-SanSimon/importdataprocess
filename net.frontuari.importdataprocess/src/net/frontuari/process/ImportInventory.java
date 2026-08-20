@@ -457,7 +457,6 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 				}
 				imp.set_ValueNoCheck("M_AttributeSetInstance_ID", M_AttributeSetInstance_ID);
 				imp.saveEx();
-
 				MInventoryLine line = new MInventoryLine (inventory, 
 					imp.getM_Locator_ID(), imp.getM_Product_ID(), M_AttributeSetInstance_ID,
 					imp.getQtyBook(), imp.getQtyCount(), imp.getQtyInternalUse());
@@ -640,7 +639,7 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 		}
 		int lineID = 0;
 		int costOrgID = p_AD_OrgTrx_ID;
-		int costASI = line.getM_AttributeSetInstance_ID();
+		int costASI = (line.getM_AttributeSetInstance_ID()==0 ? imp.get_ValueAsInt("M_AttributeSetInstance_ID") : line.getM_AttributeSetInstance_ID());
 		if (MAcctSchema.COSTINGLEVEL_Client.equals(costingLevel)){
 			costOrgID = 0;
 			costASI = 0;
@@ -680,7 +679,6 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 					costingLine.setNewCostPrice(imp.getCurrentCostPrice());
 					costingLine.setM_Locator_ID(0);
 					costingLine.setAD_Org_ID(imp.getAD_Org_ID());
-					log.warning("Lote para costo"+costASI);
 					costingLine.setM_AttributeSetInstance_ID(costASI);
 					costingLine.saveEx();
 					lineID = costingLine.getM_InventoryLine_ID();
@@ -693,7 +691,6 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 				costingLine.setNewCostPrice(imp.getCurrentCostPrice());
 				costingLine.setM_Locator_ID(0);
 				costingLine.setAD_Org_ID(imp.getAD_Org_ID());
-				log.warning("Lote para costo"+costASI);
 				costingLine.setM_AttributeSetInstance_ID(costASI);
 				costingLine.saveEx();
 				lineID = costingLine.getM_InventoryLine_ID();
