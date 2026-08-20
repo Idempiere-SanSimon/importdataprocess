@@ -457,9 +457,23 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 				}
 				imp.set_ValueNoCheck("M_AttributeSetInstance_ID", M_AttributeSetInstance_ID);
 				imp.saveEx();
-				MInventoryLine line = new MInventoryLine (inventory, 
-					imp.getM_Locator_ID(), imp.getM_Product_ID(), M_AttributeSetInstance_ID,
-					imp.getQtyBook(), imp.getQtyCount(), imp.getQtyInternalUse());
+				
+				int m_InventoryLine_ID = org.compiere.util.DB.getSQLValue(get_TrxName(), 
+					"SELECT M_InventoryLine_ID FROM M_InventoryLine WHERE M_Inventory_ID=? AND M_Locator_ID=? AND M_Product_ID=? AND COALESCE(M_AttributeSetInstance_ID, 0)=?",
+					inventory.getM_Inventory_ID(), imp.getM_Locator_ID(), imp.getM_Product_ID(), M_AttributeSetInstance_ID);
+
+				MInventoryLine line = null;
+				if (m_InventoryLine_ID > 0) {
+					line = new MInventoryLine(getCtx(), m_InventoryLine_ID, get_TrxName());
+					if (imp.getQtyCount() != null)
+						line.setQtyCount(line.getQtyCount() != null ? line.getQtyCount().add(imp.getQtyCount()) : imp.getQtyCount());
+					if (imp.getQtyInternalUse() != null)
+						line.setQtyInternalUse(line.getQtyInternalUse() != null ? line.getQtyInternalUse().add(imp.getQtyInternalUse()) : imp.getQtyInternalUse());
+				} else {
+					line = new MInventoryLine (inventory, 
+						imp.getM_Locator_ID(), imp.getM_Product_ID(), M_AttributeSetInstance_ID,
+						imp.getQtyBook(), imp.getQtyCount(), imp.getQtyInternalUse());
+				}
 				line.setDescription(imp.getDescription());
 				if (imp.getC_Charge_ID() > 0)
 					line.setInventoryType(MInventoryLine.INVENTORYTYPE_ChargeAccount);
@@ -556,14 +570,14 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 			if (product.isInstanceAttribute())
 			{
 				MAttributeSet mas = product.getAttributeSet();
-				MAttributeSetInstance masi = new MAttributeSetInstance(getCtx(), 0, mas.getM_AttributeSet_ID(), get_TrxName());
-				if (mas.isLot() && hasLot)
-					masi.setLot(imp.getLot(), imp.getM_Product_ID());
-				if (mas.isSerNo() && hasSerNo)
-					masi.setSerNo(imp.getSerNo());
+				
+				int resolved_M_Attribute_ID = 0;
+				int resolved_M_AttributeValue_ID = 0;
+				int resolved_ValueNumber = 0;
+				String resolved_ValueString = null;
+				String resolved_AttributeValueType = null;
 				
 				if (hasAttributeValue) {
-					masi.saveEx(); // Save first to generate M_AttributeSetInstance_ID
 					MAttribute[] attributes = mas.getMAttributes(true);
 					if (attributes != null) {
 						for (MAttribute attribute : attributes) {
@@ -572,7 +586,9 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 								if (values != null) {
 									for (MAttributeValue val : values) {
 										if (attributeValue.equalsIgnoreCase(val.getValue()) || attributeValue.equalsIgnoreCase(val.getName())) {
-											attribute.setMAttributeInstance(masi.getM_AttributeSetInstance_ID(), val);
+											resolved_M_Attribute_ID = attribute.getM_Attribute_ID();
+											resolved_M_AttributeValue_ID = val.getM_AttributeValue_ID();
+											resolved_AttributeValueType = MAttribute.ATTRIBUTEVALUETYPE_List;
 											break;
 										}
 									}
@@ -580,9 +596,9 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 							} else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attribute.getAttributeValueType())) {
 								int refValueId = attribute.getAD_Reference_Value_ID();
 								if (refValueId > 0) {
-									MRefTable refTable = MRefTable.get(getCtx(), refValueId, get_TrxName());
+									org.compiere.model.MRefTable refTable = org.compiere.model.MRefTable.get(getCtx(), refValueId, get_TrxName());
 									if (refTable != null && refTable.getAD_Table_ID() > 0) {
-										MTable table = MTable.get(getCtx(), refTable.getAD_Table_ID());
+										org.compiere.model.MTable table = org.compiere.model.MTable.get(getCtx(), refTable.getAD_Table_ID());
 										String[] searchCols = {"Name", "Value", "TaxID", "DocumentNo"};
 										StringBuilder where = new StringBuilder();
 										java.util.List<Object> params = new java.util.ArrayList<Object>();
@@ -602,7 +618,9 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 											String sqlRef = "SELECT " + pkColName + " FROM " + table.getTableName() + " WHERE " + where.toString();
 											int recordId = DB.getSQLValue(get_TrxName(), sqlRef, params);
 											if (recordId > 0) {
-												attribute.setMAttributeInstance(masi.getM_AttributeSetInstance_ID(), recordId);
+												resolved_M_Attribute_ID = attribute.getM_Attribute_ID();
+												resolved_ValueNumber = recordId;
+												resolved_AttributeValueType = MAttribute.ATTRIBUTEVALUETYPE_Reference;
 											} else {
 												log.warning("No se ha encontrado el valor de referencia para " + attributeValue + " en la tabla " + table.getTableName());
 											}
@@ -612,14 +630,72 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 									}
 								}
 							} else if (MAttribute.ATTRIBUTEVALUETYPE_StringMax40.equals(attribute.getAttributeValueType())) {
-								attribute.setMAttributeInstance(masi.getM_AttributeSetInstance_ID(), attributeValue);
+								resolved_M_Attribute_ID = attribute.getM_Attribute_ID();
+								resolved_ValueString = attributeValue;
+								resolved_AttributeValueType = MAttribute.ATTRIBUTEVALUETYPE_StringMax40;
+							}
+							
+							if (resolved_M_Attribute_ID > 0) {
+								break;
 							}
 						}
 					}
 				}
-
-				masi.setDescription();
-				masi.saveEx();
+				
+				StringBuilder sqlFind = new StringBuilder("SELECT masi.M_AttributeSetInstance_ID ")
+					.append("FROM M_AttributeSetInstance masi ")
+					.append("WHERE masi.M_AttributeSet_ID=? ")
+					.append("AND COALESCE(masi.Lot, '')=? ")
+					.append("AND COALESCE(masi.SerNo, '')=? ");
+				
+				java.util.List<Object> findParams = new java.util.ArrayList<Object>();
+				findParams.add(mas.getM_AttributeSet_ID());
+				findParams.add(hasLot ? imp.getLot() : "");
+				findParams.add(hasSerNo ? imp.getSerNo() : "");
+				
+				if (hasAttributeValue && resolved_M_Attribute_ID > 0) {
+					sqlFind.append("AND EXISTS (SELECT 1 FROM M_AttributeInstance mai WHERE mai.M_AttributeSetInstance_ID=masi.M_AttributeSetInstance_ID AND mai.M_Attribute_ID=? ");
+					findParams.add(resolved_M_Attribute_ID);
+					if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(resolved_AttributeValueType)) {
+						sqlFind.append("AND mai.M_AttributeValue_ID=?) ");
+						findParams.add(resolved_M_AttributeValue_ID);
+					} else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(resolved_AttributeValueType)) {
+						sqlFind.append("AND mai.ValueNumber=?) ");
+						findParams.add(java.math.BigDecimal.valueOf(resolved_ValueNumber));
+					} else if (MAttribute.ATTRIBUTEVALUETYPE_StringMax40.equals(resolved_AttributeValueType)) {
+						sqlFind.append("AND mai.Value=?) ");
+						findParams.add(resolved_ValueString);
+					}
+				}
+				sqlFind.append("ORDER BY masi.M_AttributeSetInstance_ID DESC");
+				
+				int existingASI_ID = DB.getSQLValue(get_TrxName(), sqlFind.toString(), findParams);
+				if (existingASI_ID > 0) {
+					return existingASI_ID;
+				}
+				
+				MAttributeSetInstance masi = new MAttributeSetInstance(getCtx(), 0, mas.getM_AttributeSet_ID(), get_TrxName());
+				if (mas.isLot() && hasLot)
+					masi.setLot(imp.getLot(), imp.getM_Product_ID());
+				if (mas.isSerNo() && hasSerNo)
+					masi.setSerNo(imp.getSerNo());
+				
+				masi.saveEx(); // Save first to generate M_AttributeSetInstance_ID
+				
+				if (hasAttributeValue && resolved_M_Attribute_ID > 0) {
+					MAttribute attr = new MAttribute(getCtx(), resolved_M_Attribute_ID, get_TrxName());
+					if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(resolved_AttributeValueType)) {
+						attr.setMAttributeInstance(masi.getM_AttributeSetInstance_ID(), new MAttributeValue(getCtx(), resolved_M_AttributeValue_ID, get_TrxName()));
+					} else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(resolved_AttributeValueType)) {
+						attr.setMAttributeInstance(masi.getM_AttributeSetInstance_ID(), resolved_ValueNumber);
+					} else if (MAttribute.ATTRIBUTEVALUETYPE_StringMax40.equals(resolved_AttributeValueType)) {
+						attr.setMAttributeInstance(masi.getM_AttributeSetInstance_ID(), resolved_ValueString);
+					}
+				} else {
+					masi.setDescription();
+					masi.saveEx();
+				}
+				
 				M_AttributeSetInstance_ID = masi.getM_AttributeSetInstance_ID();
 			}
 		}
