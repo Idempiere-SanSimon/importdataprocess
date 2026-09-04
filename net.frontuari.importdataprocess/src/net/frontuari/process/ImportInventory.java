@@ -37,8 +37,6 @@ import org.compiere.model.MInventory;
 import org.compiere.model.MInventoryLine;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategoryAcct;
-import org.compiere.model.MRefTable;
-import org.compiere.model.MTable;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.PO;
 import org.compiere.model.X_I_Inventory;
@@ -691,10 +689,9 @@ public class ImportInventory extends CustomProcess implements ImportProcess
 					} else if (MAttribute.ATTRIBUTEVALUETYPE_StringMax40.equals(resolved_AttributeValueType)) {
 						attr.setMAttributeInstance(masi.getM_AttributeSetInstance_ID(), resolved_ValueString);
 					}
-				} else {
-					masi.setDescription();
-					masi.saveEx();
 				}
+				masi.setDescription();
+				masi.saveEx();
 				
 				M_AttributeSetInstance_ID = masi.getM_AttributeSetInstance_ID();
 			}
