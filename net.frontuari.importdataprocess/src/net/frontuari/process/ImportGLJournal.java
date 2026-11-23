@@ -24,6 +24,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.adempiere.base.annotation.Process;
@@ -65,6 +67,8 @@ public class ImportGLJournal extends CustomProcess
 	private boolean			m_IsImportOnlyNoErrors = true;
 	/** Import by Organization			*/
 	private boolean			m_IsImportbyOrg = true;
+	/** Fixed length of an SPI payroll line	*/
+	private static final int	SPI_LINE_LENGTH = 230;
 
 
 	/**
@@ -129,6 +133,8 @@ public class ImportGLJournal extends CustomProcess
 		// because a statement on a missing column aborts the whole transaction on PostgreSQL.
 		boolean hasUser2Value = test.get_ColumnIndex("User2Value") >= 0;
 		
+		// SPI lines with a broken layout are not parsed; they are flagged as errors after the reset below
+		List<Integer> invalidSpiLines = new ArrayList<Integer>();
 		if (test.get_ColumnIndex("SPIFileContent")>0) {
 				PreparedStatement pstmtValidate = null;
 				ResultSet rsValidate = null;
@@ -147,6 +153,11 @@ public class ImportGLJournal extends CustomProcess
 							X_I_GLJournal imp = new X_I_GLJournal (getCtx (), rsValidate, get_TrxName());
 		
 							String content = imp.get_ValueAsString("SPIFileContent");
+							if (!isValidSpiLine(content))
+							{
+								invalidSpiLines.add(imp.getI_GLJournal_ID());
+								continue;
+							}
 							String OrgValue = content.substring(0, 4);
 							String date = content.substring(47,55);
 							String accountNo = content.substring(55,59);
@@ -220,6 +231,19 @@ public class ImportGLJournal extends CustomProcess
 			.append("WHERE I_IsImported<>'Y' OR I_IsImported IS NULL");
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (log.isLoggable(Level.INFO)) log.info ("Reset=" + no);
+
+		//	Error SPI line layout (wrong length, amount or debit/credit type)
+		if (!invalidSpiLines.isEmpty())
+		{
+			StringBuilder ids = new StringBuilder();
+			for (Integer id : invalidSpiLines)
+				ids.append(ids.length() > 0 ? "," : "").append(id);
+			sql = new StringBuilder ("UPDATE I_GLJournal ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid SPI line, ' ")
+				.append("WHERE I_GLJournal_ID IN (").append(ids).append(")");
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			log.warning ("Invalid SPI line=" + no);
+		}
 
 		//	Set Client from Name
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
@@ -1119,6 +1143,23 @@ public class ImportGLJournal extends CustomProcess
 		addLog (0, null, new BigDecimal (noInsertLine), "@GL_JournalLine_ID@: @Inserted@");
 		return "";
 	}	//	doIt
+
+	/**
+	 * A valid SPI line has the fixed length, a numeric amount (positions 110-126)
+	 * and a debit (1) or credit (2) type (position 156). A line shifted by one character
+	 * would otherwise be imported with a wrong amount and side, unbalancing the journal.
+	 * @param content SPI line
+	 * @return true if the line can be parsed by position
+	 */
+	private boolean isValidSpiLine(String content)
+	{
+		if (content == null || content.length() != SPI_LINE_LENGTH)
+			return false;
+		String trxType = content.substring(155, 156);
+		if (!"1".equals(trxType) && !"2".equals(trxType))
+			return false;
+		return content.substring(109, 126).replace(" ", "").matches("-?\\d{3,}");
+	}	//	isValidSpiLine
 
 }	//	ImportGLJournal
 
