@@ -125,6 +125,9 @@ public class ImportGLJournal extends CustomProcess
 		}
 
 		X_I_GLJournal test = new X_I_GLJournal(getCtx(),getRecord_ID(),get_TrxName());
+		// The operational zone needs the User2Value column (2Pack 1.0.5). Without it the zone is ignored,
+		// because a statement on a missing column aborts the whole transaction on PostgreSQL.
+		boolean hasUser2Value = test.get_ColumnIndex("User2Value") >= 0;
 		
 		if (test.get_ColumnIndex("SPIFileContent")>0) {
 				PreparedStatement pstmtValidate = null;
@@ -176,7 +179,8 @@ public class ImportGLJournal extends CustomProcess
 							imp.setOrgTrxValue(OrgValue);
 							imp.setAccountValue(accountNo);
 							imp.set_ValueOfColumn("User1Value", User1);
-							imp.set_ValueOfColumn("User2Value", User2.isEmpty() ? null : User2);
+							if (hasUser2Value)
+								imp.set_ValueOfColumn("User2Value", User2.isEmpty() ? null : User2);
 							imp.setDescription(Description);
 							BigDecimal Amt = new BigDecimal (amt);
 							if (trxType.equalsIgnoreCase("1")) {
@@ -620,25 +624,28 @@ public class ImportGLJournal extends CustomProcess
 
 
 		//	Set User2_ID (operational zone) from its code, using the U2 element of the accounting schema
-		sql = new StringBuilder ("UPDATE I_GLJournal i ")
-			.append("SET User2_ID=(SELECT p.C_ElementValue_ID FROM C_ElementValue p")
-			.append(" WHERE p.Value=i.User2Value AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID")
-			.append(" AND EXISTS (SELECT 1 FROM C_AcctSchema_Element ase WHERE ase.C_Element_ID = p.C_Element_ID")
-			.append(" AND ase.ElementType = 'U2' AND ase.IsActive = 'Y' AND ase.C_AcctSchema_ID = i.C_AcctSchema_ID)) ")
-			.append("WHERE User2_ID IS NULL AND User2Value IS NOT NULL")
-			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (log.isLoggable(Level.FINE)) log.fine("Set User2 from Value=" + no);
-		sql = new StringBuilder ("UPDATE I_GLJournal i ")
-			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid User2, '")
-			.append("WHERE User2_ID IS NULL AND User2Value IS NOT NULL")
-			// only when the schema uses the operational zone; otherwise the code is ignored
-			.append(" AND EXISTS (SELECT 1 FROM C_AcctSchema_Element ase WHERE ase.C_AcctSchema_ID = i.C_AcctSchema_ID")
-			.append(" AND ase.ElementType = 'U2' AND ase.IsActive = 'Y')")
-			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
-		if (no != 0)
-			log.warning ("Invalid User2=" + no);
+		if (hasUser2Value)
+		{
+			sql = new StringBuilder ("UPDATE I_GLJournal i ")
+				.append("SET User2_ID=(SELECT p.C_ElementValue_ID FROM C_ElementValue p")
+				.append(" WHERE p.Value=i.User2Value AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID")
+				.append(" AND EXISTS (SELECT 1 FROM C_AcctSchema_Element ase WHERE ase.C_Element_ID = p.C_Element_ID")
+				.append(" AND ase.ElementType = 'U2' AND ase.IsActive = 'Y' AND ase.C_AcctSchema_ID = i.C_AcctSchema_ID)) ")
+				.append("WHERE User2_ID IS NULL AND User2Value IS NOT NULL")
+				.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (log.isLoggable(Level.FINE)) log.fine("Set User2 from Value=" + no);
+			sql = new StringBuilder ("UPDATE I_GLJournal i ")
+				.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid User2, '")
+				.append("WHERE User2_ID IS NULL AND User2Value IS NOT NULL")
+				// only when the schema uses the operational zone; otherwise the code is ignored
+				.append(" AND EXISTS (SELECT 1 FROM C_AcctSchema_Element ase WHERE ase.C_AcctSchema_ID = i.C_AcctSchema_ID")
+				.append(" AND ase.ElementType = 'U2' AND ase.IsActive = 'Y')")
+				.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
+			no = DB.executeUpdate(sql.toString(), get_TrxName());
+			if (no != 0)
+				log.warning ("Invalid User2=" + no);
+		}
 
 		//	Set SalesRegion
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
