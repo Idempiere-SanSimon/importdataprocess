@@ -148,6 +148,10 @@ public class ImportGLJournal extends CustomProcess
 							String date = content.substring(47,55);
 							String accountNo = content.substring(55,59);
 							String User1 = content.substring(60,64);
+							// Operational zone (User2) code after the cost center: "1710-001" -> "001"
+							String User2 = content.length() > 64 ? content.substring(64, Math.min(content.length(), 109)).trim() : "";
+							if (User2.startsWith("-"))
+								User2 = User2.substring(1).trim();
 							String amt = content.substring(109,126);
 							String Description = content.substring(126,155);
 							String trxType = content.substring(155,156);
@@ -172,6 +176,7 @@ public class ImportGLJournal extends CustomProcess
 							imp.setOrgTrxValue(OrgValue);
 							imp.setAccountValue(accountNo);
 							imp.set_ValueOfColumn("User1Value", User1);
+							imp.set_ValueOfColumn("User2Value", User2.isEmpty() ? null : User2);
 							imp.setDescription(Description);
 							BigDecimal Amt = new BigDecimal (amt);
 							if (trxType.equalsIgnoreCase("1")) {
@@ -598,7 +603,8 @@ public class ImportGLJournal extends CustomProcess
 		// Set User1_ID David Castillo
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
 				.append("SET User1_ID=(SELECT p.C_ElementValue_ID FROM c_elementvalue p")
-				.append(" JOIN C_Element e on p.C_Element_ID = e.C_Element_ID and e.ElementType = 'U'")
+				.append(" JOIN C_AcctSchema_Element ase ON ase.C_Element_ID = p.C_Element_ID AND ase.ElementType = 'U1' AND ase.IsActive = 'Y'")
+				.append(" AND ase.C_AcctSchema_ID = i.C_AcctSchema_ID")
 				.append(" WHERE p.Value=i.User1Value AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID) ")
 				.append("WHERE User1_ID IS NULL AND User1Value IS NOT NULL")
 				.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
@@ -612,6 +618,27 @@ public class ImportGLJournal extends CustomProcess
 			if (no != 0)
 				log.warning ("Invalid User1=" + no);*/
 
+
+		//	Set User2_ID (operational zone) from its code, using the U2 element of the accounting schema
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+			.append("SET User2_ID=(SELECT p.C_ElementValue_ID FROM C_ElementValue p")
+			.append(" JOIN C_AcctSchema_Element ase ON ase.C_Element_ID = p.C_Element_ID AND ase.ElementType = 'U2' AND ase.IsActive = 'Y'")
+			.append(" AND ase.C_AcctSchema_ID = i.C_AcctSchema_ID")
+			.append(" WHERE p.Value=i.User2Value AND p.IsSummary='N' AND i.AD_Client_ID=p.AD_Client_ID) ")
+			.append("WHERE User2_ID IS NULL AND User2Value IS NOT NULL")
+			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (log.isLoggable(Level.FINE)) log.fine("Set User2 from Value=" + no);
+		sql = new StringBuilder ("UPDATE I_GLJournal i ")
+			.append("SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid User2, '")
+			.append("WHERE User2_ID IS NULL AND User2Value IS NOT NULL")
+			// only when the schema uses the operational zone; otherwise the code is ignored
+			.append(" AND EXISTS (SELECT 1 FROM C_AcctSchema_Element ase WHERE ase.C_AcctSchema_ID = i.C_AcctSchema_ID")
+			.append(" AND ase.ElementType = 'U2' AND ase.IsActive = 'Y')")
+			.append(" AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'").append (clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		if (no != 0)
+			log.warning ("Invalid User2=" + no);
 
 		//	Set SalesRegion
 		sql = new StringBuilder ("UPDATE I_GLJournal i ")
@@ -1042,6 +1069,8 @@ public class ImportGLJournal extends CustomProcess
 					line.setC_Activity_ID(imp.get_ValueAsInt("C_Activity_ID"));//new fields
 				if(imp.get_ValueAsInt("User1_ID") > 0)
 					line.setUser1_ID(imp.get_ValueAsInt("User1_ID"));//new fields
+				if(imp.getUser2_ID() > 0)
+					line.setUser2_ID(imp.getUser2_ID());
 				//
 				line.setC_UOM_ID(imp.getC_UOM_ID());
 				line.setQty(imp.getQty());
@@ -1085,3 +1114,4 @@ public class ImportGLJournal extends CustomProcess
 	}	//	doIt
 
 }	//	ImportGLJournal
+
